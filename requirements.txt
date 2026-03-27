@@ -2,8 +2,15 @@ fastapi
 uvicorn
 streamlit
 requests
-apscheduler
 sqlalchemy
 pydantic
 pydantic-settings
-python-dotenv
+apscheduler
+plotly
+pandas
+chromadb
+sentence-transformers
+openai
+feedparser
+beautifulsoup4
+lxml

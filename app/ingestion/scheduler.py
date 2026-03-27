@@ -12,8 +12,17 @@ def refresh_news_job() -> dict:
     db = SessionLocal()
     try:
         fetcher = NewsFetcher()
-        raw_articles = fetcher.fetch_newsapi(settings.default_query, page_size=20)
-        print("DEBUG raw_articles:", len(raw_articles))
+
+        newsapi_articles = fetcher.fetch_newsapi(settings.default_query, page_size=20)
+        bbc_articles = fetcher.fetch_bbc_rss()
+        aljazeera_articles = fetcher.fetch_aljazeera_page()
+
+        raw_articles = newsapi_articles + bbc_articles + aljazeera_articles
+
+        print("DEBUG newsapi_articles:", len(newsapi_articles))
+        print("DEBUG bbc_articles:", len(bbc_articles))
+        print("DEBUG aljazeera_articles:", len(aljazeera_articles))
+        print("DEBUG raw_articles_total:", len(raw_articles))
 
         filtered_articles = [article for article in raw_articles if is_relevant_article(article)]
         print("DEBUG filtered_articles:", len(filtered_articles))
