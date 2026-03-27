@@ -1,9 +1,12 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Body
 from sqlalchemy.orm import Session
+
 from app.api.schemas.news import RefreshResponse, LatestNewsResponse, ArticleOut
-from app.core.database import get_db
+from app.core.database import get_db, SessionLocal
 from app.ingestion.scheduler import refresh_news_job
 from app.services.article_service import get_latest_articles
+from app.models.article import Article
+from app.rag.vectordb import search_articles
 
 router = APIRouter()
 
@@ -26,11 +29,13 @@ def latest_news(
     db: Session = Depends(get_db),
 ):
     articles = get_latest_articles(db, topic=topic, limit=limit)
+
     return LatestNewsResponse(
         topic=topic,
         count=len(articles),
         articles=[ArticleOut.model_validate(article) for article in articles],
     )
+
 
 @router.get("/summary")
 def get_news_summary():
@@ -42,16 +47,16 @@ def get_news_summary():
             return {
                 "total": 0,
                 "avg_risk": 0,
-                "top_risks": []
+                "top_risks": [],
             }
 
         total = len(articles)
-        avg_risk = sum(a.risk_score for a in articles) / total
+        avg_risk = sum((a.risk_score or 0) for a in articles) / total
 
         sorted_articles = sorted(
             articles,
-            key=lambda x: x.risk_score,
-            reverse=True
+            key=lambda x: x.risk_score or 0,
+            reverse=True,
         )
 
         top = sorted_articles[:3]
@@ -62,12 +67,35 @@ def get_news_summary():
             "top_risks": [
                 {
                     "title": a.title,
-                    "risk_score": a.risk_score,
-                    "url": a.url
+                    "risk_score": a.risk_score or 0,
+                    "url": a.url,
                 }
                 for a in top
-            ]
+            ],
         }
-
     finally:
         db.close()
+
+
+@router.post("/ask")
+def ask_news(query: str = Body(..., embed=True)):
+    results = search_articles(query=query, n_results=5)
+
+    formatted = []
+    ids = results.get("ids", [[]])[0]
+    docs = results.get("documents", [[]])[0]
+    metas = results.get("metadatas", [[]])[0]
+
+    for doc_id, doc, meta in zip(ids, docs, metas):
+        formatted.append(
+            {
+                "id": doc_id,
+                "document": doc,
+                "metadata": meta,
+            }
+        )
+
+    return {
+        "query": query,
+        "results": formatted,
+    }

@@ -121,3 +121,37 @@ if articles_data:
         st.divider()
 else:
     st.info("Click 'Load Latest News' to view articles.")
+
+    st.subheader("Ask the News Database")
+
+user_question = st.text_input(
+    "Ask a question about supply-chain risk",
+    value="What evidence suggests oil and shipping disruption?"
+)
+
+if st.button("Ask AI Search"):
+    try:
+        response = requests.post(
+            f"{API_BASE}/news/ask",
+            json={"query": user_question},
+            timeout=60,
+        )
+        response.raise_for_status()
+        rag_data = response.json()
+
+        st.write("### Search Results")
+
+        if not rag_data["results"]:
+            st.info("No results found.")
+        else:
+            for item in rag_data["results"]:
+                meta = item.get("metadata", {})
+
+                st.markdown(f"#### {meta.get('title', 'Untitled')}")
+                st.write(f"**Source:** {meta.get('source', 'Unknown')}")
+                st.write(f"**Risk Score:** {meta.get('risk_score', 0)}")
+                st.write(item.get("document", "")[:500] + "...")
+                st.divider()
+
+    except Exception as exc:
+        st.error(f"Could not run semantic search: {exc}")
