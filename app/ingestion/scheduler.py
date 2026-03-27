@@ -13,15 +13,19 @@ def refresh_news_job() -> dict:
     try:
         fetcher = NewsFetcher()
         raw_articles = fetcher.fetch_newsapi(settings.default_query, page_size=20)
+        print("DEBUG raw_articles:", len(raw_articles))
 
         filtered_articles = [article for article in raw_articles if is_relevant_article(article)]
+        print("DEBUG filtered_articles:", len(filtered_articles))
 
         normalized_articles = [
             normalize_article(article, topic="middle-east-risk")
             for article in filtered_articles
         ]
+        print("DEBUG normalized_articles:", len(normalized_articles))
 
         result = save_articles(db, normalized_articles)
+        print("DEBUG save result:", result)
 
         return {
             "status": "success",

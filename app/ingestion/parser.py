@@ -7,6 +7,7 @@ GEOPOLITICAL_KEYWORDS = [
     "gaza",
     "houthi",
     "strait of hormuz",
+    "yemen",
 ]
 
 SUPPLY_CHAIN_KEYWORDS = [
@@ -33,10 +34,10 @@ def is_relevant_article(article: dict) -> bool:
 
     text = f"{title} {description} {content}".lower()
 
-    has_geo = any(keyword in text for keyword in GEOPOLITICAL_KEYWORDS)
-    has_supply = any(keyword in text for keyword in SUPPLY_CHAIN_KEYWORDS)
+    geo_matches = sum(1 for keyword in GEOPOLITICAL_KEYWORDS if keyword in text)
+    supply_matches = sum(1 for keyword in SUPPLY_CHAIN_KEYWORDS if keyword in text)
 
-    return has_geo and has_supply
+    return (geo_matches >= 1 and supply_matches >= 1) or (geo_matches + supply_matches >= 2)
 
 
 def normalize_article(article: dict, topic: str | None = None) -> dict:
