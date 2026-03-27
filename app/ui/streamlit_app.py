@@ -134,10 +134,13 @@ if st.button("Ask AI Search"):
         response = requests.post(
             f"{API_BASE}/news/ask",
             json={"query": user_question},
-            timeout=60,
+            timeout=90,
         )
         response.raise_for_status()
         rag_data = response.json()
+
+        st.write("### AI Answer")
+        st.success(rag_data.get("answer", "No answer generated."))
 
         st.write("### Search Results")
 

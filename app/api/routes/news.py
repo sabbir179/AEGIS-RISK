@@ -7,6 +7,7 @@ from app.ingestion.scheduler import refresh_news_job
 from app.services.article_service import get_latest_articles
 from app.models.article import Article
 from app.rag.vectordb import search_articles
+from app.rag.llm_answer import generate_ai_answer
 
 router = APIRouter()
 
@@ -95,7 +96,10 @@ def ask_news(query: str = Body(..., embed=True)):
             }
         )
 
+    ai_answer = generate_ai_answer(query, docs)
+
     return {
         "query": query,
+        "answer": ai_answer,
         "results": formatted,
     }
