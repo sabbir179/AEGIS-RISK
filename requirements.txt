@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+streamlit
+requests
+apscheduler
+sqlalchemy
+pydantic
+pydantic-settings
+python-dotenv
