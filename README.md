@@ -97,3 +97,92 @@ L --> B
 B --> M[Dashboard UI]
 M --> A
 ```
+
+📸 Screenshots
+📊 Dashboard Overview
+
+📈 Risk Distribution
+
+📰 Latest Articles
+
+🤖 AI Risk Analysis
+
+🧪 Example AI Output
+
+The system generates structured insights like:
+
+Overall Assessment
+Risk Level
+Key Risk Drivers
+Why It Matters
+Recommended Watchpoints
+🧰 Tech Stack
+Backend
+FastAPI
+Uvicorn
+Frontend
+Streamlit
+Data Processing
+Requests
+BeautifulSoup
+feedparser
+AI & Search
+OpenAI API
+ChromaDB (Vector DB)
+Retrieval-Augmented Generation (RAG)
+Visualization
+Plotly
+Pandas
+📂 Project Structure
+'''
+Aegis-Risk/
+├── app/
+│ ├── api/
+│ ├── ingestion/
+│ ├── rag/
+│ ├── services/
+│ └── ui/
+├── screenshots/
+├── requirements.txt
+├── .env
+└── README.md
+'''
+
+⚙️ Setup & Run
+
+1. Clone repo
+   git clone <your-repo-url>
+   cd Aegis-Risk
+2. Install dependencies
+   pip install -r requirements.txt
+3. Configure environment
+   NEWSAPI_KEY=your_key
+   OPENAI_API_KEY=your_key
+   DATABASE_URL=sqlite:///./aegis_risk.db
+4. Run backend
+   uvicorn app.api.main:app --reload
+5. Run frontend
+   streamlit run app/ui/streamlit_app.py
+   💡 Example Questions
+   What evidence suggests oil disruption?
+   Why is the Strait of Hormuz critical?
+   Which articles show highest risk?
+   How does conflict impact supply chains?
+   🧠 Why This Project Stands Out
+
+This project demonstrates:
+
+End-to-end system design
+Real-world AI application
+Multi-source data pipelines
+RAG architecture
+Explainable AI outputs
+Production-style API + UI integration
+
+🔮 Future Improvements
+Source filtering in UI
+Time-series risk trends
+Deployment (Render / AWS)
+Alerts (Slack / Email)
+Dockerization
+More news sources
