@@ -5,6 +5,34 @@ from app.models.article import Article
 from app.ingestion.dedupe import article_fingerprint
 
 
+def calculate_risk_score(text: str) -> int:
+    keywords = [
+        "war",
+        "conflict",
+        "attack",
+        "oil",
+        "shipping",
+        "sanctions",
+        "blockade",
+        "disruption",
+        "military",
+        "iran",
+        "israel",
+        "red sea",
+        "suez",
+        "tanker",
+    ]
+
+    score = 0
+    text_lower = text.lower()
+
+    for word in keywords:
+        if word in text_lower:
+            score += 1
+
+    return score
+
+
 def save_articles(db: Session, normalized_articles: list[dict]) -> dict:
     inserted = 0
     duplicates = 0
@@ -17,6 +45,9 @@ def save_articles(db: Session, normalized_articles: list[dict]) -> dict:
             duplicates += 1
             continue
 
+        combined_text = f"{item.get('title', '')} {item.get('summary', '')}"
+        risk_score = calculate_risk_score(combined_text)
+
         article = Article(
             fingerprint=fingerprint,
             source=item.get("source"),
@@ -26,6 +57,7 @@ def save_articles(db: Session, normalized_articles: list[dict]) -> dict:
             summary=item.get("summary"),
             content=item.get("content"),
             topic=item.get("topic"),
+            risk_score=risk_score,
             created_at=datetime.now(timezone.utc),
         )
         db.add(article)

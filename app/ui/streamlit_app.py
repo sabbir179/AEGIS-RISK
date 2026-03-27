@@ -5,6 +5,7 @@ API_BASE = "http://127.0.0.1:8000/api"
 
 st.set_page_config(page_title="Aegis-Risk Live News Monitor", layout="wide")
 st.title("Aegis-Risk Live News Monitor")
+st.write("Monitor the latest supply-chain and geopolitical news updates.")
 
 topic = st.text_input("Topic filter", value="")
 limit = st.slider("Number of articles", min_value=1, max_value=20, value=10)
@@ -35,6 +36,7 @@ with col2:
             data = response.json()
 
             st.subheader("Latest Articles")
+
             if not data["articles"]:
                 st.info("No articles found.")
             else:
@@ -43,6 +45,17 @@ with col2:
                     st.write(f"**Source:** {article.get('source', 'Unknown')}")
                     st.write(f"**Published:** {article.get('published_at', 'Unknown')}")
                     st.write(article.get("summary", "No summary available."))
+
+                    score = article.get("risk_score", 0)
+
+                    if score >= 5:
+                        st.error(f"Risk Score: {score} | HIGH")
+                    elif score >= 3:
+                        st.warning(f"Risk Score: {score} | MEDIUM")
+                    else:
+                        st.success(f"Risk Score: {score} | LOW")
+
                     st.divider()
+
         except Exception as exc:
             st.error(f"Could not load news: {exc}")

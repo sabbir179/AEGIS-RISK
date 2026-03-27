@@ -10,6 +10,7 @@ class ArticleOut(BaseModel):
     published_at: Optional[str] = None
     summary: Optional[str] = None
     topic: Optional[str] = None
+    risk_score: Optional[int] = None
 
     class Config:
         from_attributes = True

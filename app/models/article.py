@@ -14,4 +14,5 @@ class Article(Base):
     summary = Column(Text, nullable=True)
     content = Column(Text, nullable=True)
     topic = Column(String(255), nullable=True)
+    risk_score = Column(Integer, nullable=True)
     created_at = Column(DateTime, nullable=True)
