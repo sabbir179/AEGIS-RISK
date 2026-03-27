@@ -1,3 +1,5 @@
+import re
+
 GEOPOLITICAL_KEYWORDS = [
     "israel",
     "iran",
@@ -26,11 +28,56 @@ SUPPLY_CHAIN_KEYWORDS = [
     "trade disruption",
 ]
 
+HIGH_RISK_KEYWORDS = [
+    "war",
+    "conflict",
+    "attack",
+    "crisis",
+    "blockade",
+    "missile",
+    "strike",
+    "military",
+]
+
+MEDIUM_RISK_KEYWORDS = [
+    "disruption",
+    "delay",
+    "shortage",
+    "sanction",
+    "rerouting",
+    "volatility",
+    "threat",
+    "uncertainty",
+]
+
+
+def clean_text(text: str | None) -> str:
+    if not text:
+        return ""
+    text = re.sub(r"<.*?>", "", text)
+    text = re.sub(r"\s+", " ", text)
+    return text.strip()
+
+
+def compute_risk_score(text: str) -> int:
+    text = text.lower()
+    score = 0
+
+    for word in HIGH_RISK_KEYWORDS:
+        if word in text:
+            score += 2
+
+    for word in MEDIUM_RISK_KEYWORDS:
+        if word in text:
+            score += 1
+
+    return min(score, 5)
+
 
 def is_relevant_article(article: dict) -> bool:
-    title = article.get("title") or ""
-    description = article.get("description") or ""
-    content = article.get("content") or ""
+    title = clean_text(article.get("title"))
+    description = clean_text(article.get("description"))
+    content = clean_text(article.get("content"))
 
     text = f"{title} {description} {content}".lower()
 
@@ -41,12 +88,18 @@ def is_relevant_article(article: dict) -> bool:
 
 
 def normalize_article(article: dict, topic: str | None = None) -> dict:
+    title = clean_text(article.get("title")) or "Untitled"
+    summary = clean_text(article.get("description"))
+    content = clean_text(article.get("content"))
+    combined_text = f"{title} {summary} {content}"
+
     return {
-        "source": (article.get("source") or {}).get("name"),
-        "title": article.get("title") or "Untitled",
+        "source": clean_text((article.get("source") or {}).get("name")),
+        "title": title,
         "url": article.get("url") or "",
         "published_at": article.get("publishedAt"),
-        "summary": article.get("description"),
-        "content": article.get("content"),
+        "summary": summary,
+        "content": content,
         "topic": topic,
+        "risk_score": compute_risk_score(combined_text),
     }

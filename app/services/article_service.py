@@ -13,7 +13,6 @@ def save_articles(db: Session, articles):
     duplicates = 0
 
     for item in articles:
-        # 🚨 CRITICAL FIX: skip invalid URLs
         if not item.get("url"):
             print("Skipping article with missing URL:", item.get("title"))
             continue
@@ -42,7 +41,6 @@ def save_articles(db: Session, articles):
 
     db.commit()
 
-    # Store in vector DB
     saved_articles = (
         db.query(Article)
         .order_by(Article.id.desc())

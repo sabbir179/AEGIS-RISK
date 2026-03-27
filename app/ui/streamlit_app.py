@@ -122,7 +122,7 @@ if articles_data:
 else:
     st.info("Click 'Load Latest News' to view articles.")
 
-    st.subheader("Ask the News Database")
+st.subheader("Ask the News Database")
 
 user_question = st.text_input(
     "Ask a question about supply-chain risk",
