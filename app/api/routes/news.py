@@ -31,3 +31,43 @@ def latest_news(
         count=len(articles),
         articles=[ArticleOut.model_validate(article) for article in articles],
     )
+
+@router.get("/summary")
+def get_news_summary():
+    db = SessionLocal()
+    try:
+        articles = db.query(Article).all()
+
+        if not articles:
+            return {
+                "total": 0,
+                "avg_risk": 0,
+                "top_risks": []
+            }
+
+        total = len(articles)
+        avg_risk = sum(a.risk_score for a in articles) / total
+
+        sorted_articles = sorted(
+            articles,
+            key=lambda x: x.risk_score,
+            reverse=True
+        )
+
+        top = sorted_articles[:3]
+
+        return {
+            "total": total,
+            "avg_risk": round(avg_risk, 2),
+            "top_risks": [
+                {
+                    "title": a.title,
+                    "risk_score": a.risk_score,
+                    "url": a.url
+                }
+                for a in top
+            ]
+        }
+
+    finally:
+        db.close()

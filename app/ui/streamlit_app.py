@@ -1,5 +1,7 @@
 import requests
 import streamlit as st
+import pandas as pd
+import plotly.express as px
 
 API_BASE = "http://127.0.0.1:8000/api"
 
@@ -34,28 +36,88 @@ with col2:
             )
             response.raise_for_status()
             data = response.json()
-
-            st.subheader("Latest Articles")
-
-            if not data["articles"]:
-                st.info("No articles found.")
-            else:
-                for article in data["articles"]:
-                    st.markdown(f"### [{article['title']}]({article['url']})")
-                    st.write(f"**Source:** {article.get('source', 'Unknown')}")
-                    st.write(f"**Published:** {article.get('published_at', 'Unknown')}")
-                    st.write(article.get("summary", "No summary available."))
-
-                    score = article.get("risk_score", 0)
-
-                    if score >= 5:
-                        st.error(f"Risk Score: {score} | HIGH")
-                    elif score >= 3:
-                        st.warning(f"Risk Score: {score} | MEDIUM")
-                    else:
-                        st.success(f"Risk Score: {score} | LOW")
-
-                    st.divider()
-
+            st.session_state["articles_data"] = data["articles"]
         except Exception as exc:
             st.error(f"Could not load news: {exc}")
+
+articles_data = st.session_state.get("articles_data", [])
+
+st.subheader("System Summary")
+try:
+    summary_response = requests.get(f"{API_BASE}/news/summary", timeout=30)
+    summary_response.raise_for_status()
+    summary = summary_response.json()
+
+    c1, c2 = st.columns(2)
+    c1.metric("Total Stored Articles", summary["total"])
+    c2.metric("Average Risk Score", summary["avg_risk"])
+
+    st.write("### Top Risk Articles")
+    if summary["top_risks"]:
+        for item in summary["top_risks"]:
+            st.markdown(f"- [{item['title']}]({item['url']}) (Risk: {item['risk_score']})")
+    else:
+        st.info("No top risk articles yet.")
+except Exception:
+    st.warning("Could not load summary")
+
+if articles_data:
+    articles_data = sorted(
+        articles_data,
+        key=lambda x: x.get("risk_score", 0),
+        reverse=True,
+    )
+
+    high_count = sum(1 for a in articles_data if a.get("risk_score", 0) >= 5)
+    medium_count = sum(1 for a in articles_data if 3 <= a.get("risk_score", 0) < 5)
+    low_count = sum(1 for a in articles_data if a.get("risk_score", 0) < 3)
+
+    st.subheader("Risk Overview")
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("Total Articles", len(articles_data))
+    m2.metric("High Risk", high_count)
+    m3.metric("Medium Risk", medium_count)
+    m4.metric("Low Risk", low_count)
+
+    chart_rows = []
+    for article in articles_data[:10]:
+        title = article.get("title", "Untitled")
+        short_title = title[:60] + "..." if len(title) > 60 else title
+        chart_rows.append(
+            {
+                "title": short_title,
+                "risk_score": article.get("risk_score", 0),
+            }
+        )
+
+    df = pd.DataFrame(chart_rows)
+
+    if not df.empty:
+        st.subheader("Top Article Risk Scores")
+        fig = px.bar(
+            df,
+            x="title",
+            y="risk_score",
+            title="Risk Score by Article",
+        )
+        st.plotly_chart(fig, use_container_width=True)
+
+    st.subheader("Latest Articles")
+    for article in articles_data:
+        st.markdown(f"### [{article['title']}]({article['url']})")
+        st.write(f"**Source:** {article.get('source', 'Unknown')}")
+        st.write(f"**Published:** {article.get('published_at', 'Unknown')}")
+        st.write(article.get("summary", "No summary available."))
+
+        score = article.get("risk_score", 0)
+
+        if score >= 5:
+            st.error(f"Risk Score: {score} | HIGH")
+        elif score >= 3:
+            st.warning(f"Risk Score: {score} | MEDIUM")
+        else:
+            st.success(f"Risk Score: {score} | LOW")
+
+        st.divider()
+else:
+    st.info("Click 'Load Latest News' to view articles.")
