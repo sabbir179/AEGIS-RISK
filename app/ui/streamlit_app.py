@@ -72,6 +72,13 @@ if articles_data:
     medium_count = sum(1 for a in articles_data if 3 <= a.get("risk_score", 0) < 5)
     low_count = sum(1 for a in articles_data if a.get("risk_score", 0) < 3)
 
+    if high_count > 0:
+        st.error(f"⚠️ {high_count} HIGH RISK articles detected")
+    elif medium_count > 0:
+        st.warning(f"⚠️ {medium_count} medium-risk articles detected")
+    else:
+        st.success("No high-risk articles currently detected")
+
     st.subheader("Risk Overview")
     m1, m2, m3, m4 = st.columns(4)
     m1.metric("Total Articles", len(articles_data))
@@ -100,7 +107,7 @@ if articles_data:
             y="risk_score",
             title="Risk Score by Article",
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
     st.subheader("Latest Articles")
     for article in articles_data:
@@ -142,8 +149,19 @@ if st.button("Ask AI Search"):
         st.write("### AI Answer")
         st.success(rag_data.get("answer", "No answer generated."))
 
-        st.write("### Search Results")
+        st.write("### Sources Used")
+        if not rag_data["results"]:
+            st.info("No results found.")
+        else:
+            for item in rag_data["results"]:
+                meta = item.get("metadata", {})
+                title = meta.get("title", "Untitled")
+                source = meta.get("source", "Unknown")
+                risk = meta.get("risk_score", 0)
 
+                st.markdown(f"- **{title}** | Source: {source} | Risk: {risk}")
+
+        st.write("### Search Results")
         if not rag_data["results"]:
             st.info("No results found.")
         else:

@@ -20,8 +20,15 @@ def generate_ai_answer(query: str, docs: list[str]) -> str:
                 "role": "system",
                 "content": (
                     "You are a geopolitical and supply-chain risk analyst. "
-                    "Answer only from the provided context. "
-                    "Be concise, practical, and mention the main risk drivers."
+                    "Use only the provided context. "
+                    "Write a structured answer with these exact section headings:\n"
+                    "1. Overall Assessment\n"
+                    "2. Risk Level\n"
+                    "3. Key Risk Drivers\n"
+                    "4. Why It Matters\n"
+                    "5. Recommended Watchpoints\n\n"
+                    "Keep the answer concise, practical, and professional. "
+                    "If the context is weak, say so clearly."
                 ),
             },
             {
