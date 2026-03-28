@@ -97,3 +97,42 @@ L --> B
 B --> M[Dashboard UI]
 M --> A
 ```
+
+## 🧰 Tech Stack
+
+Backend
+FastAPI
+Uvicorn
+Frontend
+Streamlit
+
+## Data Processing
+
+Requests
+BeautifulSoup
+feedparser
+
+## AI & Search
+
+OpenAI API
+ChromaDB (Vector DB)
+Retrieval-Augmented Generation (RAG)
+Visualization
+Plotly
+Pandas
+
+## 📂 Project Structure
+
+```
+Aegis-Risk/
+├── app/
+│   ├── api/
+│   ├── ingestion/
+│   ├── rag/
+│   ├── services/
+│   └── ui/
+├── screenshots/
+├── requirements.txt
+├── .env
+└── README.md
+```
