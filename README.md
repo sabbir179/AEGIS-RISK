@@ -100,26 +100,26 @@ M --> A
 
 ## 🧰 Tech Stack
 
-Backend
-FastAPI
-Uvicorn
-Frontend
-Streamlit
+- Backend
+- FastAPI
+- Uvicorn
+- Frontend
+- Streamlit
 
 ## Data Processing
 
-Requests
-BeautifulSoup
-feedparser
+- Requests
+- BeautifulSoup
+- feedparser
 
 ## AI & Search
 
-OpenAI API
-ChromaDB (Vector DB)
-Retrieval-Augmented Generation (RAG)
-Visualization
-Plotly
-Pandas
+- OpenAI API
+- ChromaDB (Vector DB)
+- Retrieval-Augmented Generation (RAG)
+- Visualization
+- Plotly
+- Pandas
 
 ## 📂 Project Structure
 
