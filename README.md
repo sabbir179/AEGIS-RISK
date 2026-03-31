@@ -84,6 +84,30 @@ flowchart LR
 
 ---
 
+## 📊 System Interface & Outputs
+
+### Dashboard Overview
+
+![Dashboard](./screenshots/dashboard.png)
+
+### Risk Analysis Output
+
+![Risk Output](./screenshots/risk_chart.png)
+
+### Article Risk Scoring
+
+![Articles](./screenshots/articles.png)
+
+### AI Answer
+
+![Articles](./screenshots/ai_answer.png)
+
+### News Sources
+
+![Articles](./screenshots/sources.png)
+
+---
+
 ## System Components
 
 ### 1. Ingestion Layer (`ingestion/`)
