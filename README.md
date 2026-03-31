@@ -2,13 +2,15 @@
 
 > An end-to-end AI system that transforms real-time news into structured risk intelligence using LLM-based reasoning.
 
+---
+
 ## Overview
 
 AEGIS-RISK is an end-to-end applied AI system that transforms real-time geopolitical and supply-chain news into structured, decision-ready risk intelligence using Large Language Models (LLMs).
 
-The system ingests live news, processes and deduplicates content, applies prompt-engineered LLM reasoning, and produces structured outputs including risk scores, drivers, summaries, and monitoring signals—surfaced through an interactive dashboard.
+The system ingests live news, processes and deduplicates content, applies prompt-engineered LLM reasoning, and produces structured outputs including risk scores, key drivers, summaries, and monitoring signals — all surfaced through an interactive dashboard.
 
-This project is positioned as a **research-oriented prototype for AI-assisted decision support**, exploring how LLMs can be used beyond text generation for structured reasoning and operational intelligence.
+This project is positioned as a **research-oriented prototype for AI-assisted decision support**, exploring how LLMs can be used beyond text generation for structured reasoning system.
 
 ---
 
@@ -16,18 +18,18 @@ This project is positioned as a **research-oriented prototype for AI-assisted de
 
 Modern risk assessment systems face key limitations:
 
-- Heavy reliance on structured datasets and static rules
-- Limited ability to process unstructured, real-time information
-- High dependence on manual expert interpretation
-- Poor scalability in rapidly evolving geopolitical contexts
+- Dependence on structured datasets and static rules
+- Limited ability to process real-time unstructured information
+- Heavy reliance on manual expert interpretation
+- Lack of scalability in fast-changing geopolitical environments
 
 ### Goal
 
-To investigate whether LLMs can:
+To explore how AI systems can:
 
 - Interpret unstructured news data
 - Extract meaningful risk signals
-- Generate consistent and structured risk assessments
+- Generate structured, explainable risk insights
 - Support decision-making in dynamic environments
 
 ---
@@ -36,25 +38,21 @@ To investigate whether LLMs can:
 
 AEGIS-RISK provides a full pipeline for real-time risk intelligence:
 
-- Ingests live geopolitical and supply-chain news
-- Deduplicates and preprocesses incoming articles
-- Applies LLM-based reasoning to assess risk
-- Generates structured outputs:
-  - Risk level (Low / Medium / High)
-  - Risk score (numeric)
-  - Key risk drivers
-  - Strategic implications
-  - Recommended watchpoints
-- Aggregates multiple articles into system-level insights
-- Provides an interactive dashboard for monitoring and analysis
+- Real-time news ingestion from multiple sources
+- Deduplication and preprocessing of articles
+- LLM-based risk reasoning and structured analysis
+- Risk scoring (article-level and aggregated)
+- Identification of key risk drivers and watchpoints
+- Interactive dashboard for monitoring and analytics
+- Retrieval-ready architecture using vector database (ChromaDB)
 
 ---
 
 ## Architecture Overview
 
-### Pipeline
+### End-to-End Pipeline
 
-News Sources → Ingestion → Deduplication → Parsing → Prompt Engineering → LLM Inference → Output Structuring → Risk Scoring → Dashboard & Analytics
+News Sources → Ingestion → Deduplication → Parsing → Preprocessing → Prompt Engineering → LLM Inference → Output Structuring → Risk Scoring → Database Storage → Analytics & Aggregation → Dashboard
 
 ---
 
@@ -84,6 +82,14 @@ flowchart LR
     style K fill:#bfb,stroke:#333,stroke-width:2px
 ```
 
+This architecture represents a complete applied AI pipeline integrating:
+
+- Real-time data ingestion
+- LLM-based structured reasoning
+- Vector-based retrieval (RAG-ready design)
+- Data storage and analytics
+- Interactive dashboard for monitoring
+
 ---
 
 ## 📊 System Interface & Outputs
@@ -112,25 +118,23 @@ flowchart LR
 
 ## 💡 Why This Matters
 
-Traditional risk analysis relies heavily on manual interpretation and structured data.
+Traditional risk analysis relies heavily on manual interpretation and structured datasets.
 
-AEGIS-RISK demonstrates how LLMs can:
+AEGIS-RISK demonstrates how AI systems can:
 
 - Process unstructured real-time information
 - Generate structured, explainable insights
 - Support faster and more scalable decision-making
 
-This project explores the shift from data analysis → AI-driven intelligence systems.
-
 ---
 
 ## 🧠 Challenges & Learnings
 
-- Ensuring consistency and reliability in LLM outputs across different inputs
-- Designing prompts for structured reasoning rather than generic text generation
-- Handling duplicate and noisy real-world news data during ingestion
-- Structuring unstructured text into decision-ready formats
-- Balancing flexibility of LLMs with the need for controlled, predictable outputs
+- Ensuring consistency and reliability in LLM outputs
+- Designing prompts for structured reasoning (not just text generation)
+- Handling duplicate and noisy real-world news data
+- Transforming unstructured text into decision-ready formats
+- Balancing flexibility of LLMs with controlled outputs
 
 ---
 
@@ -257,9 +261,9 @@ This project explores:
 
 It represents early-stage work in:
 
-- Generative AI applications
-- AI-assisted decision support systems
-- Agent-like reasoning workflows over streaming data
+- Generative AI
+- Applied AI systems
+- AI-driven risk intelligence
 
 ---
 
