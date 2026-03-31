@@ -60,34 +60,26 @@ News Sources → Ingestion → Deduplication → Parsing → Prompt Engineering 
 
 ```mermaid
 flowchart LR
+    A[News Sources] --> B[Ingestion Layer]
+    B --> B1[News Fetcher]
+    B --> B2[Deduplication]
+    B --> B3[Parser]
 
-A[News Sources] --> B[Ingestion Layer]
-B --> B1[News Fetcher]
-B --> B2[Deduplication]
-B --> B3[Parser]
+    B --> C[Preprocessing]
+    C --> D[Prompt Engineering]
+    D --> E[LLM Inference Engine]
+    E --> F[Output Structuring]
+    F --> G[Risk Scoring Engine]
+    G --> H[Database Storage]
+    H --> I[Analytics and Aggregation]
+    I --> J[Dashboard UI - Streamlit]
 
-B --> C[Preprocessing]
+    H --> K[Vector DB - Chroma]
+    K --> E
 
-C --> D[Prompt Engineering]
-
-D --> E[LLM Inference Engine]
-
-E --> F[Output Structuring]
-
-F --> G[Risk Scoring Engine]
-
-G --> H[Database Storage]
-
-H --> I[Analytics & Aggregation]
-
-I --> J[Dashboard UI (Streamlit)]
-
-H --> K[Vector DB (Chroma)]
-K --> E
-
-style E fill:#f9f,stroke:#333,stroke-width:2px
-style J fill:#bbf,stroke:#333,stroke-width:2px
-style K fill:#bfb,stroke:#333,stroke-width:2px
+    style E fill:#f9f,stroke:#333,stroke-width:2px
+    style J fill:#bbf,stroke:#333,stroke-width:2px
+    style K fill:#bfb,stroke:#333,stroke-width:2px
 ```
 
 ---
