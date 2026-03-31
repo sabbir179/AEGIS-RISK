@@ -1,138 +1,330 @@
-# 🛡️ Aegis-Risk
+# AEGIS-RISK: LLM-Powered Risk Intelligence & Monitoring System
 
-### AI-Powered Supply Chain Risk Intelligence Platform
+## Overview
 
-![Python](https://img.shields.io/badge/Python-3.10-blue)
-![FastAPI](https://img.shields.io/badge/FastAPI-Backend-green)
-![Streamlit](https://img.shields.io/badge/Streamlit-Dashboard-red)
-![OpenAI](https://img.shields.io/badge/AI-OpenAI-black)
-![ChromaDB](https://img.shields.io/badge/VectorDB-Chroma-orange)
-![Status](https://img.shields.io/badge/Status-Active-success)
+AEGIS-RISK is an end-to-end applied AI system that transforms real-time geopolitical and supply-chain news into structured, decision-ready risk intelligence using Large Language Models (LLMs).
 
----
+The system ingests live news, processes and deduplicates content, applies prompt-engineered LLM reasoning, and produces structured outputs including risk scores, drivers, summaries, and monitoring signals—surfaced through an interactive dashboard.
 
-## 🚀 Overview
-
-**Aegis-Risk** is an end-to-end AI system that monitors global news, detects geopolitical risk signals, and explains their impact on supply chains using AI.
-
-It combines:
-
-- Multi-source news ingestion
-- Risk scoring
-- Vector search (RAG)
-- AI-generated structured insights
-- Interactive dashboard
+This project is positioned as a **research-oriented prototype for AI-assisted decision support**, exploring how LLMs can be used beyond text generation for structured reasoning and operational intelligence.
 
 ---
 
-## 🎯 Project Goal
+## Problem Statement
 
-To answer:
+Modern risk assessment systems face key limitations:
 
-> **How can AI continuously monitor global news and explain supply-chain risk in real time?**
+- Heavy reliance on structured datasets and static rules
+- Limited ability to process unstructured, real-time information
+- High dependence on manual expert interpretation
+- Poor scalability in rapidly evolving geopolitical contexts
 
-This system transforms raw news into:
+### Goal
 
-- Risk scores
-- Actionable insights
-- AI explanations
+To investigate whether LLMs can:
 
----
-
-## ✨ Key Features
-
-- 🔄 Multi-source news ingestion
-  - NewsAPI
-  - BBC RSS
-  - Al Jazeera parsing
-
-- 🧠 Risk scoring engine (NLP + rules)
-
-- 🔍 Semantic search (ChromaDB)
-
-- 🤖 AI-powered explanations
-  - Risk level
-  - Key drivers
-  - Watchpoints
-
-- 📊 Interactive dashboard
-  - Charts
-  - Alerts
-  - Risk breakdown
-
-- 📚 Source-backed answers (RAG)
+- Interpret unstructured news data
+- Extract meaningful risk signals
+- Generate consistent and structured risk assessments
+- Support decision-making in dynamic environments
 
 ---
 
-## 🧠 System Architecture
+## System Capabilities
+
+AEGIS-RISK provides a full pipeline for real-time risk intelligence:
+
+- Ingests live geopolitical and supply-chain news
+- Deduplicates and preprocesses incoming articles
+- Applies LLM-based reasoning to assess risk
+- Generates structured outputs:
+  - Risk level (Low / Medium / High)
+  - Risk score (numeric)
+  - Key risk drivers
+  - Strategic implications
+  - Recommended watchpoints
+- Aggregates multiple articles into system-level insights
+- Provides an interactive dashboard for monitoring and analysis
+
+---
+
+## Architecture Overview
+
+### Pipeline
+
+News Sources → Ingestion → Deduplication → Parsing → Prompt Engineering → LLM Inference → Output Structuring → Risk Scoring → Dashboard & Analytics
+
+---
+
+## Architecture Diagram
 
 ```mermaid
-flowchart TD
+flowchart LR
 
-A[User / Streamlit Dashboard] --> B[FastAPI Backend API]
+A[News Sources] --> B[Ingestion Layer]
+B --> B1[News Fetcher]
+B --> B2[Deduplication]
+B --> B3[Parser]
 
-B --> C1[NewsAPI]
-B --> C2[BBC RSS]
-B --> C3[Al Jazeera Parsing]
+B --> C[Preprocessing]
 
-C1 --> D[Normalization]
-C2 --> D
-C3 --> D
+C --> D[Prompt Engineering]
 
-D --> E[Deduplication + Filtering]
-E --> F[Risk Scoring Engine]
+D --> E[LLM Inference Engine]
 
-F --> G[(SQLite DB)]
-F --> H[(ChromaDB)]
+E --> F[Output Structuring]
 
-H --> I[Semantic Search]
-I --> J[OpenAI LLM]
+F --> G[Risk Scoring Engine]
 
-J --> K[AI Risk Insights]
+G --> H[Database Storage]
 
-G --> L[Charts + Metrics]
-K --> B
-L --> B
+H --> I[Analytics & Aggregation]
 
-B --> M[Dashboard UI]
-M --> A
+I --> J[Dashboard UI (Streamlit)]
+
+H --> K[Vector DB (Chroma)]
+K --> E
+
+style E fill:#f9f,stroke:#333,stroke-width:2px
+style J fill:#bbf,stroke:#333,stroke-width:2px
+style K fill:#bfb,stroke:#333,stroke-width:2px
 ```
 
-## 🧰 Tech Stack
+---
 
-- Backend
+## System Components
+
+### 1. Ingestion Layer (`ingestion/`)
+
+- `news_fetcher.py` – Fetches live news data
+- `dedupe.py` – Removes duplicate articles
+- `parser.py` – Extracts and structures content
+- `scheduler.py` – Automates periodic ingestion
+
+### 2. Core Infrastructure (`core/`)
+
+- `config.py` – Configuration management
+- `database.py` – Storage and persistence layer
+
+### 3. LLM & Retrieval (`rag/`)
+
+- `llm_answer.py` – LLM interaction and reasoning logic
+- `vectordb.py` – Vector storage for retrieval (RAG-ready)
+
+### 4. API Layer (`api/`)
+
+- `routes/` – API endpoints
+- `schemas/` – Data validation and structure
+- `main.py` – API entry point
+
+### 5. Services (`services/`)
+
+- `article_service.py` – Business logic for processing articles
+
+### 6. Data Models (`models/`)
+
+- `article.py` – Article schema and structure
+
+### 7. User Interface (`ui/`)
+
+- `streamlit_app.py` – Interactive dashboard for monitoring risk insights
+
+### 8. Storage
+
+- `aegis_risk.db` – SQLite database
+- `chroma_db/` – Vector database for embeddings
+
+---
+
+## Key Features
+
+### LLM-Based Risk Reasoning
+
+- Converts unstructured news into structured intelligence
+- Uses prompt engineering to guide consistent outputs
+
+### Structured Outputs
+
+- Risk classification (Low / Medium / High)
+- Risk scoring
+- Key drivers and explanations
+
+### Real-Time Monitoring
+
+- Live news ingestion
+- Refreshable dashboard
+
+### Analytical Dashboard
+
+- Risk distribution (High / Medium / Low)
+- Average risk score
+- Top risk articles
+- Trend visualisation
+
+### Modular Architecture
+
+- Clean separation of ingestion, processing, and inference
+- Easily extensible for future features (RAG, agents)
+
+---
+
+## Example Outputs
+
+The system produces:
+
+- Overall risk assessment summaries
+- Article-level risk scores
+- Key risk drivers (geopolitical, economic, operational)
+- Recommended watchpoints
+
+Additionally:
+
+- Aggregated metrics (average risk score)
+- Risk distribution across articles
+- Visual dashboards for monitoring trends
+
+---
+
+## Engineering Design Principles
+
+### Modularity
+
+- Clear separation between ingestion, inference, and UI
+
+### Reproducibility
+
+- Structured pipelines and deterministic workflows where possible
+
+### Scalability (Conceptual)
+
+- Designed to integrate with streaming data and APIs
+
+### Maintainability
+
+- Clean project structure with isolated components
+
+---
+
+## Research Perspective
+
+This project explores:
+
+- LLMs for structured reasoning tasks
+- Reliability and consistency of AI-generated assessments
+- Converting unstructured text into decision-ready intelligence
+
+It represents early-stage work in:
+
+- Generative AI applications
+- AI-assisted decision support systems
+- Agent-like reasoning workflows over streaming data
+
+---
+
+## Limitations
+
+- LLM outputs may vary across runs
+- Limited quantitative evaluation framework
+- Not production-ready (research prototype)
+
+---
+
+## Future Work
+
+- Retrieval-Augmented Generation (RAG) integration
+- Agentic workflows with iterative reasoning
+- Feedback loops for self-improving predictions
+- Benchmark-based evaluation metrics
+- Domain-specific fine-tuning
+
+---
+
+## Tech Stack
+
+- Python
 - FastAPI
-- Uvicorn
-- Frontend
 - Streamlit
+- SQLite
+- ChromaDB (vector database)
+- LLM APIs (e.g., OpenAI)
+- Pandas / NumPy
 
-## Data Processing
+---
 
-- Requests
-- BeautifulSoup
-- feedparser
+## Installation & Setup
 
-## AI & Search
+```bash
+# Clone repository
+git clone https://github.com/your-username/AEGIS-RISK.git
+cd AEGIS-RISK
 
-- OpenAI API
-- ChromaDB (Vector DB)
-- Retrieval-Augmented Generation (RAG)
-- Visualization
-- Plotly
-- Pandas
+# Create virtual environment
+python -m venv .venv
+source .venv/bin/activate  # or .venv\Scripts\activate on Windows
 
-## 📂 Project Structure
+# Install dependencies
+pip install -r requirements.txt
+
+# Configure environment variables
+cp .env.example .env
+```
+
+---
+
+## Running the System
+
+### Start API
+
+```bash
+python app/api/main.py
+```
+
+### Run Dashboard
+
+```bash
+streamlit run app/ui/streamlit_app.py
+```
+
+---
+
+## Repository Structure
 
 ```
-Aegis-Risk/
-├── app/
-│   ├── api/
-│   ├── ingestion/
-│   ├── rag/
-│   ├── services/
-│   └── ui/
-├── screenshots/
-├── requirements.txt
-├── .env
-└── README.md
+app/
+ ├── api/
+ ├── core/
+ ├── ingestion/
+ ├── models/
+ ├── rag/
+ ├── services/
+ ├── ui/
+
+chroma_db/
+aegis_risk.db
+README.md
+requirements.txt
 ```
+
+---
+
+## Positioning
+
+AEGIS-RISK is an **applied AI system** that demonstrates:
+
+- End-to-end LLM pipeline design
+- Real-time data ingestion and processing
+- Structured reasoning using generative AI
+- Decision-support system development
+
+This project reflects early-stage capabilities in:
+
+- Generative AI
+- Applied machine learning systems
+- AI-driven risk intelligence
+
+---
+
+## Author
+
+Sabbir Ahmed  
+Research-oriented Data Scientist focused on applied AI, ML systems, and decision-support technologies
