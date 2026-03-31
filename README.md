@@ -1,5 +1,7 @@
 # AEGIS-RISK: LLM-Powered Risk Intelligence & Monitoring System
 
+> An end-to-end AI system that transforms real-time news into structured risk intelligence using LLM-based reasoning.
+
 ## Overview
 
 AEGIS-RISK is an end-to-end applied AI system that transforms real-time geopolitical and supply-chain news into structured, decision-ready risk intelligence using Large Language Models (LLMs).
@@ -30,7 +32,7 @@ To investigate whether LLMs can:
 
 ---
 
-## System Capabilities
+## Key Features
 
 AEGIS-RISK provides a full pipeline for real-time risk intelligence:
 
@@ -108,6 +110,62 @@ flowchart LR
 
 ---
 
+## 💡 Why This Matters
+
+Traditional risk analysis relies heavily on manual interpretation and structured data.
+
+AEGIS-RISK demonstrates how LLMs can:
+
+- Process unstructured real-time information
+- Generate structured, explainable insights
+- Support faster and more scalable decision-making
+
+This project explores the shift from data analysis → AI-driven intelligence systems.
+
+---
+
+## 🧠 Challenges & Learnings
+
+- Ensuring consistency and reliability in LLM outputs across different inputs
+- Designing prompts for structured reasoning rather than generic text generation
+- Handling duplicate and noisy real-world news data during ingestion
+- Structuring unstructured text into decision-ready formats
+- Balancing flexibility of LLMs with the need for controlled, predictable outputs
+
+---
+
+## Key Features
+
+### LLM-Based Risk Reasoning
+
+- Converts unstructured news into structured intelligence
+- Uses prompt engineering to guide consistent outputs
+
+### Structured Outputs
+
+- Risk classification (Low / Medium / High)
+- Risk scoring
+- Key drivers and explanations
+
+### Real-Time Monitoring
+
+- Live news ingestion
+- Refreshable dashboard
+
+### Analytical Dashboard
+
+- Risk distribution (High / Medium / Low)
+- Average risk score
+- Top risk articles
+- Trend visualisation
+
+### Modular Architecture
+
+- Clean separation of ingestion, processing, and inference
+- Easily extensible for future features (RAG, agents)
+
+---
+
 ## System Components
 
 ### 1. Ingestion Layer (`ingestion/`)
@@ -149,38 +207,6 @@ flowchart LR
 
 - `aegis_risk.db` – SQLite database
 - `chroma_db/` – Vector database for embeddings
-
----
-
-## Key Features
-
-### LLM-Based Risk Reasoning
-
-- Converts unstructured news into structured intelligence
-- Uses prompt engineering to guide consistent outputs
-
-### Structured Outputs
-
-- Risk classification (Low / Medium / High)
-- Risk scoring
-- Key drivers and explanations
-
-### Real-Time Monitoring
-
-- Live news ingestion
-- Refreshable dashboard
-
-### Analytical Dashboard
-
-- Risk distribution (High / Medium / Low)
-- Average risk score
-- Top risk articles
-- Trend visualisation
-
-### Modular Architecture
-
-- Clean separation of ingestion, processing, and inference
-- Easily extensible for future features (RAG, agents)
 
 ---
 
