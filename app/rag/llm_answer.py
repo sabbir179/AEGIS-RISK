@@ -12,82 +12,108 @@ class AegisAgenticSystem:
         self.db_path = settings.database_url.replace("sqlite:///", "")
 
     def _extract_risk_score(self, text: str) -> int:
-        """Helper to find the 1-5 score in the LLM text."""
-        match = re.search(r"Risk Score:?\s*(\d)", text)
-        if match:
-            score = int(match.group(1))
-            return max(1, min(5, score)) # Ensure it's between 1 and 5
-        return 0
+        """
+        Extracts the numeric risk score (1-5) from the AI's final response.
+        """
+        # Finds the last digit mentioned after 'Risk Score' (case insensitive)
+        matches = re.findall(r"(?:Final\s*)?Risk Score:?\s*(\d)", text, re.IGNORECASE)
+        if matches:
+            score = int(matches[-1])
+            return max(1, min(5, score))
+        return 3 # Default to moderate risk if extraction fails
 
     def save_to_gold_layer(self, query: str, final_report: str):
         """
-        MEDALLION GOLD LAYER: Structured Research Data.
-        This table allows you to create the graphs for your IEEE paper.
+        MEDALLION GOLD LAYER: Persists verified consensus for graphing.
         """
         risk_score = self._extract_risk_score(final_report)
         
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS gold_risk_index (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                timestamp TIMESTAMP,
-                topic TEXT,
-                risk_score INTEGER,
-                full_report TEXT,
-                consensus_reached BOOLEAN
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS gold_risk_index (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    timestamp TEXT,
+                    topic TEXT,
+                    risk_score INTEGER,
+                    full_report TEXT,
+                    consensus_reached BOOLEAN
+                )
+            ''')
+
+            cursor.execute(
+                "INSERT INTO gold_risk_index (timestamp, topic, risk_score, full_report, consensus_reached) VALUES (?, ?, ?, ?, ?)",
+                (datetime.now().isoformat(), query, risk_score, final_report, True)
             )
-        ''')
+            
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            print(f"❌ Gold Layer Persistence Error: {e}")
 
-        cursor.execute(
-            "INSERT INTO gold_risk_index (timestamp, topic, risk_score, full_report, consensus_reached) VALUES (?, ?, ?, ?, ?)",
-            (datetime.now().isoformat(), query, risk_score, final_report, True)
-        )
-        
-        conn.commit()
-        conn.close()
-
-    def generate_consensus_report(self, query: str, docs: list[str]) -> str:
+    def generate_consensus_report(self, query: str, docs: list) -> str:
         """
-        AGENTIC CONSENSUS: Lead Analyst (OpenAI) vs. Critic (Anthropic).
+        AGENTIC CONSENSUS: Lead Analyst (OpenAI) vs. Verification Critic (Anthropic).
         """
-        if not docs:
-            return "No Silver-layer context found to analyze."
+        # --- ROBUST DATA VALIDATION ---
+        # This prevents the 'NoneType is not iterable' error from your screenshot
+        if not docs or docs is None:
+            return "⚠️ No context found. Please run Bronze/Silver ingestion first."
 
-        context = "\n\n".join(docs[:5])
+        try:
+            # Safely handle different ChromaDB return formats
+            if isinstance(docs, list) and len(docs) > 0 and isinstance(docs[0], list):
+                context_list = docs[0]
+            else:
+                context_list = docs
+            
+            # Clean and join the top 5 articles
+            context = "\n\n".join([str(d) for d in context_list if d][:5])
+            
+            if not context.strip():
+                return "⚠️ Context found but it was empty. No data to analyze."
 
-        # PHASE 1: LEAD ANALYST (OpenAI)
+        except Exception as e:
+            return f"⚠️ Error processing Silver-layer context: {str(e)}"
+
+        # --- PHASE 1: LEAD ANALYST (GPT-4o) ---
         analyst_task = (
-            "You are a Lead Geopolitical Analyst. Based on the context, provide a detailed report. "
-            "You MUST include a section: 'Risk Score: X' where X is 1-5."
+            "You are a Lead Geopolitical Analyst. Provide a detailed risk report. "
+            "You MUST include a section: 'Risk Score: X' (1-5)."
         )
         
-        analyst_resp = self.openai_client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "system", "content": analyst_task},
-                {"role": "user", "content": f"Context: {context}\nQuery: {query}"}
-            ]
-        )
-        analyst_report = analyst_resp.choices[0].message.content
+        try:
+            analyst_resp = self.openai_client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {"role": "system", "content": analyst_task},
+                    {"role": "user", "content": f"Context: {context}\nQuery: {query}"}
+                ]
+            )
+            analyst_report = analyst_resp.choices[0].message.content
+        except Exception as e:
+            return f"❌ Analyst Agent (OpenAI) failed: {str(e)}"
 
-        # PHASE 2: VERIFICATION CRITIC (Anthropic) - The 'Verifiable AI' step
+        # --- PHASE 2: VERIFICATION CRITIC (Claude 4-6 Sonnet) ---
         critic_task = (
-            "You are a Verification Critic. Review the Analyst's report for bias or errors. "
-            "If you agree, finalize the report. If not, suggest corrections. "
-            "End your response with 'Final Risk Score: X'."
+            "You are a Verification Critic. Review the Analyst's report for errors. "
+            "End your verification with 'Final Risk Score: X' (1-5)."
         )
 
-        critic_resp = self.anthropic_client.messages.create(
-            model="claude-3-5-sonnet-20240620",
-            max_tokens=1500,
-            system=critic_task,
-            messages=[{"role": "user", "content": f"Report to verify: {analyst_report}\nOriginal Context: {context}"}]
-        )
-        final_critique = critic_resp.content[0].text
+        try:
+            critic_resp = self.anthropic_client.messages.create(
+                model="claude-sonnet-4-6",
+                max_tokens=1500,
+                system=critic_task,
+                messages=[{"role": "user", "content": f"Report: {analyst_report}\nContext: {context}"}]
+            )
+            final_critique = critic_resp.content[0].text
+        except Exception as e:
+            return f"❌ Critic Agent (Anthropic) failed: {str(e)}"
 
-        # SYNTHESIS
+        # --- SYNTHESIS & STORAGE ---
         final_output = (
             f"## 🏛️ AGENTIC CONSENSUS REPORT\n\n"
             f"### LEAD ANALYST ASSESSMENT\n{analyst_report}\n\n"
@@ -95,12 +121,5 @@ class AegisAgenticSystem:
             f"### CRITIC VERIFICATION\n{final_critique}"
         )
 
-        # SAVE TO GOLD LAYER
         self.save_to_gold_layer(query, final_output)
-
         return final_output
-
-# Compatibility function for your FastAPI routes
-def generate_ai_answer(query: str, docs: list[str]) -> str:
-    agent_system = AegisAgenticSystem()
-    return agent_system.generate_consensus_report(query, docs)
