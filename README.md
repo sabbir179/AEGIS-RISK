@@ -64,8 +64,8 @@ News Sources (NewsAPI, RSS, Web Scraping)
 
 ## Dashboard Preview
 
-![Aegis-Risk Architecture](screenshots/Dashboard.png)
-![Aegis-Risk Architecture](screenshots/Ai_answers.png)
+![Aegis-Risk Architecture](screenshots/dashboard.png)
+![Aegis-Risk Architecture](screenshots/ai_answers.png)
 ![Aegis-Risk Architecture](screenshots/sources.png)
 
 ---
