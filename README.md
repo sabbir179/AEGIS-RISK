@@ -60,7 +60,7 @@ News Sources (NewsAPI, RSS, Web Scraping)
 
 ## System Architecture
 
-## ![Aegis-Risk Architecture](diagram/aegis_architecture.png)
+## ![Aegis-Risk Architecture](diagrams/architechture.png)
 
 ## Dashboard Preview
 
