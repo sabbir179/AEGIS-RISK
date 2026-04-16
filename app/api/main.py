@@ -5,19 +5,17 @@ from app.api.routes.news import router as news_router
 from app.ingestion.scheduler import start_scheduler
 from app.core.config import settings
 
-# Create standard SQLAlchemy tables
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
-    title="Aegis-Risk API", 
+    title="Aegis-Risk API",
     version="1.0.0",
     description="Agentic Geopolitical Risk Monitoring System"
 )
 
+
 @app.on_event("startup")
 def on_startup():
-    # --- FIX: FORCE CREATE GOLD TABLE ---
-    # This solves the 'no such table' error in your screenshot
     try:
         db_path = settings.database_url.replace("sqlite:///", "")
         conn = sqlite3.connect(db_path)
@@ -25,10 +23,11 @@ def on_startup():
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS gold_risk_index (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                timestamp DATETIME,
+                timestamp TEXT,
                 topic TEXT,
                 risk_score INTEGER,
-                analysis TEXT
+                full_report TEXT,
+                consensus_reached BOOLEAN
             )
         """)
         conn.commit()
@@ -37,8 +36,8 @@ def on_startup():
     except Exception as e:
         print(f"❌ Error creating Gold table: {e}")
 
-    # Start the background news fetcher
     start_scheduler()
+
 
 @app.get("/")
 def root():
@@ -47,5 +46,6 @@ def root():
         "docs": "/docs",
         "status": "ready"
     }
+
 
 app.include_router(news_router, prefix="/api/news", tags=["news"])

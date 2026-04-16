@@ -3,7 +3,7 @@ from app.core.config import settings
 from app.core.database import SessionLocal
 from app.ingestion.news_fetcher import NewsFetcher
 from app.ingestion.parser import normalize_article, is_relevant_article
-from app.services.article_service import save_articles
+from app.services.article_service import ArticleService
 
 scheduler = BackgroundScheduler()
 
@@ -24,7 +24,10 @@ def refresh_news_job() -> dict:
         print("DEBUG aljazeera_articles:", len(aljazeera_articles))
         print("DEBUG raw_articles_total:", len(raw_articles))
 
-        filtered_articles = [article for article in raw_articles if is_relevant_article(article)]
+        filtered_articles = [
+            article for article in raw_articles
+            if is_relevant_article(article)
+        ]
         print("DEBUG filtered_articles:", len(filtered_articles))
 
         normalized_articles = [
@@ -33,7 +36,7 @@ def refresh_news_job() -> dict:
         ]
         print("DEBUG normalized_articles:", len(normalized_articles))
 
-        result = save_articles(db, normalized_articles)
+        result = ArticleService.save_articles(db, normalized_articles)
         print("DEBUG save result:", result)
 
         return {
