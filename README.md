@@ -1,112 +1,161 @@
-# 🛡️ Aegis-Risk: Agentic Geopolitical Risk Monitor
+# Aegis-Risk: Agentic Geopolitical Risk Monitor
 
-Aegis-Risk is an **LLM-powered multi-agent system** for real-time geopolitical risk analysis, focused on **critical infrastructure domains such as oil transit routes, maritime chokepoints, and global energy supply chains**.
+Aegis-Risk is an LLM-powered multi-agent system for real-time geopolitical risk analysis across critical infrastructure domains such as oil transit routes, maritime chokepoints, and global energy supply chains.
 
-The system implements a **Medallion Architecture (Bronze → Silver → Gold)** combined with **multi-model adversarial verification**, enabling **high-confidence, evidence-backed risk assessments**.
+The project combines a Medallion-style data pipeline, retrieval-augmented generation, and adversarial multi-model verification to produce evidence-backed risk assessments with source visibility.
 
----
+## Key Features
 
-## 🚀 Key Features
+- Multi-agent reasoning workflow
+  - Lead Analyst: GPT-4o
+  - Verification Critic: Claude 4.6
+  - Optional Refiner: Groq / Llama-3
+- Medallion architecture
+  - Bronze: raw ingestion and audit trail
+  - Silver: cleaned and structured articles
+  - Gold: risk scoring and historical trend tracking
+- Geopolitical retrieval focused on oil transit, chokepoints, shipping lanes, and disruption signals
+- Evidence-backed outputs tied to source articles
+- Streamlit control-center dashboard for operators and demos
 
-- 🧠 **Multi-Agent AI System**
-  - Lead Analyst (GPT-4o)
-  - Verification Critic (Claude 4.6)
-  - Optional Refiner (LLaMA / Groq)
+## System Overview
 
-- 🏗️ **Medallion Data Architecture**
-  - Bronze: Raw ingestion (audit trail)
-  - Silver: Cleaned + structured articles
-  - Gold: Risk scoring + trend analysis
+Aegis-Risk integrates data engineering, retrieval, and LLM reasoning in one pipeline:
 
-- 🔍 **Targeted Geopolitical Retrieval**
-  - Precision filtering for oil transit, maritime routes, chokepoints
-
-- 📊 **Explainable Risk Scoring**
-  - Evidence-backed outputs with supported/unsupported claims
-
-- 🧾 **Verifiable AI Outputs**
-  - Each claim tied to source articles
-  - Critic identifies hallucinations & gaps
-
----
-
-## 🧠 System Architecture Overview
-
-Aegis-Risk integrates **data engineering + retrieval + LLM reasoning** into a unified pipeline:
-
-```
-News Sources (NewsAPI, RSS, Web Scraping)
+```text
+News Sources (NewsAPI, RSS, scraping)
             ↓
-        Bronze Layer (Raw JSON Storage)
+        Bronze Layer (raw ingestion)
             ↓
-   Normalization + Cleaning Pipeline
+   Cleaning and normalization pipeline
             ↓
         Silver Layer (SQLite)
             ↓
-   Relevance Filtering (Vector Gate)
+   Relevance filtering (vector gate)
             ↓
         Vector DB (Chroma)
             ↓
-   Retrieval-Augmented Generation (RAG)
+   Retrieval-Augmented Generation
             ↓
-   Multi-Agent Reasoning System
+   Multi-Agent Reasoning Workflow
             ↓
-        Gold Layer (Risk Index)
+        Gold Layer (risk index)
             ↓
-        Streamlit UI
+        Streamlit Dashboard
 ```
-
----
 
 ## System Architecture
 
-## ![Aegis-Risk Architecture](diagrams/architechture.png)
+![Aegis-Risk Architecture](diagrams/architechture.png)
 
 ## Dashboard Preview
 
-![Aegis-Risk Architecture](screenshots/dashboard.png)
-![Aegis-Risk Architecture](screenshots/ai_answers.png)
-![Aegis-Risk Architecture](screenshots/sources.png)
+![Aegis-Risk Dashboard](screenshots/dashboard.png)
+![Aegis-Risk AI Answers](screenshots/ai_answers.png)
+![Aegis-Risk Sources](screenshots/sources.png)
 
----
+## Run Locally
 
-## 🏛️ Medallion Architecture
+### 1. Create and activate a virtual environment
 
-### 🥉 Bronze Layer
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+### 2. Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 3. Configure environment variables
+
+Create a `.env` file in the project root with the required keys:
+
+```env
+NEWSAPI_KEY=your_newsapi_key
+OPENAI_API_KEY=your_openai_key
+ANTHROPIC_API_KEY=your_anthropic_key
+GROQ_API_KEY=your_groq_key
+DATABASE_URL=sqlite:///./aegis_risk.db
+REFRESH_MINUTES=60
+DEFAULT_QUERY=Israel Iran Red Sea Suez oil shipping fuel supply chain
+```
+
+Environment variables are loaded from `app/core/config.py`.
+
+### 4. Start the FastAPI backend
+
+```bash
+uvicorn app.api.main:app --reload
+```
+
+The API will be available at:
+
+- `http://127.0.0.1:8000`
+- `http://127.0.0.1:8000/docs`
+
+### 5. Start the Streamlit dashboard
+
+Open a second terminal, activate the same environment, then run:
+
+```bash
+streamlit run app/ui/streamlit_app.py
+```
+
+The dashboard usually opens at:
+
+- `http://localhost:8501`
+
+## Workflow
+
+1. Refresh the Bronze pipeline to ingest and promote news data.
+2. Load Silver evidence for a topic such as `oil`, `iran`, or `red sea`.
+3. Sync the Gold timeline to visualize historical risk scores.
+4. Run a consensus query so the analyst and critic debate the currently loaded evidence.
+
+Core endpoints:
+
+```text
+POST /api/news/refresh
+GET  /api/news/latest
+POST /api/news/ask
+GET  /api/news/risk-indices
+```
+
+## Dashboard Experience
+
+The Streamlit UI is designed as a dashboard-style control center with:
+
+- a command sidebar for ingestion, evidence loading, and timeline sync
+- summary KPI cards for focus topic, timeline risk, consensus grade, and source diversity
+- a historical Gold-layer risk chart
+- a consensus workspace for analyst and critic outputs
+- an evidence feed with source cards and direct links to underlying articles
+
+## Medallion Architecture
+
+### Bronze Layer
 
 - Raw, unmodified article ingestion
-- Stored for auditability and reproducibility
-- Sources:
-  - NewsAPI
-  - BBC RSS
-  - Al Jazeera scraping
-  - Tehran Times, Jerusalem Post
+- Auditability and reproducibility of upstream data
+- News sources including NewsAPI, RSS feeds, and targeted scraping
 
----
+### Silver Layer
 
-### 🥈 Silver Layer
+- Cleaned and normalized articles stored in SQLite
+- Enriched article metadata such as title, summary, source, timestamp, and content
 
-- Cleaned and normalized articles
-- Stored in SQLite
-- Enriched with:
-  - Title
-  - Summary
-  - Full content extraction
-  - Metadata (source, timestamp)
-
----
-
-### 🥇 Gold Layer
+### Gold Layer
 
 - LLM-generated geopolitical risk assessments
 - Time-series risk scoring
 - Multi-model consensus output
 
----
+## Vector Relevance Filtering
 
-## 🔍 Vector Relevance Filtering (Key Innovation)
-
-Aegis-Risk introduces a **semantic gating mechanism** before vector indexing:
+Before indexing into ChromaDB, the system uses semantic gating to keep only transit-relevant reporting:
 
 ```python
 VECTOR_KEYWORDS = [
@@ -116,121 +165,70 @@ VECTOR_KEYWORDS = [
 ]
 ```
 
-Only **transit-relevant articles** are embedded into ChromaDB.
+This helps reduce:
 
-👉 This prevents:
+- noise pollution
+- political-only articles with weak operational relevance
+- irrelevant macroeconomic coverage
 
-- Noise pollution
-- Political-only articles
-- Irrelevant macroeconomic news
+## Multi-Agent AI System
 
----
+### Lead Analyst
 
-## 🤖 Multi-Agent AI System
+- Generates the main geopolitical risk report
+- Surfaces risk factors, mitigation ideas, recommendations, and a risk score
 
-### 1. Lead Analyst (GPT-4o)
+### Verification Critic
 
-- Generates structured risk report:
-  - Introduction
-  - Risk factors
-  - Mitigations
-  - Recommendations
-  - Risk score (1–5)
+- Validates whether claims are supported by retrieved evidence
+- Flags unsupported or weakly grounded reasoning
 
----
+### Refiner
 
-### 2. Verification Critic (Claude 4.6)
+- Optional cleanup stage for clarity and structure
 
-- Validates all claims
-- Categorizes:
-  - ✅ Supported
-  - ❌ Unsupported
-  - ⚠ Missing Evidence
+## Example Output
 
----
+- Risk score: 3-4 out of 5
+- Typical focus areas:
+  - Strait of Hormuz disruption risk
+  - naval blockades
+  - tanker movement constraints
 
-### 3. Refiner (Optional)
+## Project Structure
 
-- Improves clarity and structure
-- Reduces redundancy
+```text
+app/
+  api/         FastAPI routes and schemas
+  core/        configuration and database setup
+  ingestion/   news fetch, parsing, dedupe, scheduler
+  models/      SQLAlchemy models
+  rag/         vector search and LLM consensus logic
+  services/    article retrieval services
+  ui/          Streamlit dashboard
+```
 
----
+## Tech Stack
 
-## 🔁 Workflow
+- Python
+- FastAPI
+- SQLAlchemy
+- Streamlit
+- ChromaDB
+- OpenAI
+- Anthropic
+- Groq
+- BeautifulSoup
+- RSS parsing
 
-1. Trigger ingestion:
+## Future Work
 
-   ```
-   POST /api/news/refresh
-   ```
+- chokepoint-specific scoring for Hormuz, Suez, and Bab el-Mandeb
+- real-time streaming ingestion
+- graph-based geopolitical entity linking
+- quantitative risk calibration using market data
 
-2. Load context:
+## Author
 
-   ```
-   GET /api/news/latest
-   ```
-
-3. Run analysis:
-
-   ```
-   POST /api/news/ask
-   ```
-
----
-
-## 🖥️ UI (Streamlit)
-
-Features:
-
-- Topic filtering (e.g., "oil", "iran")
-- Risk trend visualization
-- Evidence inspection (expandable articles)
-- Multi-agent output panels
-
----
-
-## 📊 Example Output
-
-- Risk Score: **3–4 (Moderate to High)**
-- Focus:
-  - Strait of Hormuz disruptions
-  - Naval blockades
-  - Tanker movement constraints
-
----
-
-## 🧪 Research Contribution
-
-This system contributes:
-
-- **Agentic AI for geopolitical intelligence**
-- **Verifiable multi-model reasoning**
-- **Hybrid data architecture (Medallion + RAG)**
-- **Noise-resistant retrieval via semantic gating**
-
----
-
-## 📌 Future Work
-
-- Chokepoint-specific scoring (Hormuz, Suez, Bab el-Mandeb)
-- Real-time streaming ingestion
-- Graph-based geopolitical entity linking
-- Quantitative risk calibration using market data
-
----
-
-## 🛠️ Tech Stack
-
-- Python (FastAPI, SQLAlchemy)
-- Streamlit (UI)
-- ChromaDB (Vector DB)
-- OpenAI GPT-4o
-- Anthropic Claude 4.6
-- BeautifulSoup + RSS parsing
-
----
-
-## 👤 Author
-
-Sabbir Ahmed
+Sabbir Ahmed  
 Research-oriented Data Scientist focused on applied AI, ML systems, and decision-support technologies
