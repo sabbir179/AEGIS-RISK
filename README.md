@@ -20,33 +20,115 @@ The project combines a Medallion-style data pipeline, retrieval-augmented genera
 
 ## System Overview
 
-Aegis-Risk integrates data engineering, retrieval, and LLM reasoning in one pipeline:
+Aegis-Risk is built as an end-to-end geopolitical risk intelligence pipeline. It collects open-source news, filters for operationally relevant disruption signals, stores clean evidence, retrieves the most relevant context for user questions, and generates verified risk assessments through a two-agent LLM workflow.
 
-```text
-News Sources (NewsAPI, RSS, scraping)
-            ↓
-        Bronze Layer (raw ingestion)
-            ↓
-   Cleaning and normalization pipeline
-            ↓
-        Silver Layer (SQLite)
-            ↓
-   Relevance filtering (vector gate)
-            ↓
-        Vector DB (Chroma)
-            ↓
-   Retrieval-Augmented Generation
-            ↓
-   Multi-Agent Reasoning Workflow
-            ↓
-        Gold Layer (risk index)
-            ↓
-        Streamlit Dashboard
-```
+The system is organized around four main layers:
+
+- **Ingestion Layer**: pulls articles from NewsAPI, BBC RSS, Al Jazeera, and other regional sources.
+- **Medallion Data Layer**: preserves raw records in Bronze, stores normalized articles in Silver, and persists verified risk scores in Gold.
+- **RAG + Agentic Reasoning Layer**: retrieves evidence from ChromaDB, generates an analyst report with GPT-4o, and verifies it with Claude.
+- **Application Layer**: exposes FastAPI endpoints and a Streamlit dashboard for refresh, search, risk timeline, source review, and AI-generated assessment.
 
 ## System Architecture
 
-![Aegis-Risk Architecture](diagrams/architechture.png)
+```mermaid
+flowchart LR
+    subgraph Sources["Open-Source Intelligence Sources"]
+        NewsAPI["NewsAPI"]
+        RSS["RSS Feeds<br/>BBC / Jerusalem Post / Tehran Times"]
+        Web["Targeted Web Parsing<br/>Al Jazeera"]
+    end
+
+    subgraph Ingestion["Ingestion Pipeline"]
+        Fetcher["NewsFetcher<br/>fetch + clean source payloads"]
+        Parser["Parser + Relevance Gate<br/>oil, shipping, chokepoint, conflict signals"]
+        Dedupe["Deduplication<br/>avoid repeated articles"]
+    end
+
+    subgraph Medallion["Medallion Data Layer"]
+        Bronze["Bronze<br/>raw article JSON audit trail"]
+        SilverDB["Silver<br/>normalized articles in SQLite"]
+        Chroma["Vector Memory<br/>ChromaDB evidence index"]
+        Gold["Gold<br/>verified risk index + reports"]
+    end
+
+    subgraph API["FastAPI Backend"]
+        Refresh["POST /api/news/refresh"]
+        Latest["GET /api/news/latest"]
+        Ask["POST /api/news/ask"]
+        Timeline["GET /api/news/risk-indices"]
+    end
+
+    subgraph Intelligence["RAG + Multi-Agent Reasoning"]
+        Retrieve["Semantic Retrieval<br/>ranked evidence search"]
+        Analyst["Lead Analyst<br/>GPT-4o risk assessment"]
+        Critic["Verification Critic<br/>Claude evidence check"]
+        Consensus["Consensus Report<br/>risk score, claims, citations"]
+    end
+
+    subgraph UI["Streamlit Control Center"]
+        Dashboard["Dashboard KPIs"]
+        Chart["Gold Risk Timeline"]
+        Workspace["AI Consensus Workspace"]
+        SourcesPanel["Evidence Source Review"]
+    end
+
+    NewsAPI --> Fetcher
+    RSS --> Fetcher
+    Web --> Fetcher
+    Fetcher --> Bronze
+    Fetcher --> Parser
+    Parser --> Dedupe
+    Dedupe --> SilverDB
+    SilverDB --> Chroma
+
+    Refresh --> Fetcher
+    Latest --> SilverDB
+    Ask --> Retrieve
+    Timeline --> Gold
+
+    Chroma --> Retrieve
+    Retrieve --> Analyst
+    Analyst --> Critic
+    Critic --> Consensus
+    Consensus --> Gold
+
+    Dashboard --> Latest
+    Workspace --> Ask
+    SourcesPanel --> Latest
+    Chart --> Timeline
+    Gold --> Chart
+    SilverDB --> SourcesPanel
+    Consensus --> Workspace
+    Latest --> Dashboard
+```
+
+![Aegis-Risk Advanced AI-Medallion Architecture](diagrams/aegis-risk-medallion-architecture.svg)
+
+## LinkedIn Post Draft
+
+I built **Aegis-Risk**, an AI-powered geopolitical risk monitoring system for tracking disruption signals across oil transit routes, maritime chokepoints, and global energy supply chains.
+
+The project combines:
+
+- Open-source news ingestion from APIs, RSS feeds, and targeted web parsing
+- A Medallion-style data pipeline with Bronze, Silver, and Gold layers
+- ChromaDB vector retrieval for evidence-grounded context
+- A multi-agent LLM workflow with a Lead Analyst and Verification Critic
+- FastAPI backend services and a Streamlit control-center dashboard
+
+The goal is to move beyond generic news summarization and produce evidence-backed risk assessments with source visibility, risk scoring, and historical trend tracking.
+
+Architecture highlights:
+
+- Bronze layer stores raw article payloads for auditability
+- Silver layer stores cleaned and normalized evidence
+- Vector memory retrieves the most relevant sources for each question
+- GPT-4o generates the risk assessment
+- Claude verifies claims against the retrieved evidence
+- Gold layer stores final risk reports and time-series risk scores
+
+This was a great exercise in combining data engineering, RAG, multi-agent AI, and product-focused dashboard design into one applied decision-support system.
 
 ## Dashboard Preview
 
