@@ -8,7 +8,7 @@ from app.core.config import settings
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
-    title="Aegis-Risk API",
+    title="RiskLens AI API",
     version="1.0.0",
     description="Agentic Geopolitical Risk Monitoring System"
 )
@@ -42,7 +42,7 @@ def on_startup():
 @app.get("/")
 def root():
     return {
-        "message": "Aegis-Risk API is online",
+        "message": "RiskLens AI API is online",
         "docs": "/docs",
         "status": "ready"
     }

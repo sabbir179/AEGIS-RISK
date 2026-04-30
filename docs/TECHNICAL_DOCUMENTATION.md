@@ -1,8 +1,8 @@
-# Aegis-Risk Technical Documentation
+# RiskLens AI Technical Documentation
 
 ## 1. Project Summary
 
-**Aegis-Risk** is an AI-powered geopolitical risk monitoring system focused on oil transit routes, maritime chokepoints, shipping lanes, and global energy supply chain disruption signals.
+**RiskLens AI** is an AI-powered geopolitical risk monitoring system focused on oil transit routes, maritime chokepoints, shipping lanes, and global energy supply chain disruption signals.
 
 The system ingests open-source news, filters for geopolitical and supply-chain relevance, stores normalized article evidence, retrieves relevant context through a vector database, and generates evidence-backed risk assessments using a multi-agent LLM workflow.
 
@@ -57,7 +57,7 @@ Application Layer
 
 Architecture visual:
 
-![Aegis-Risk Architecture](../diagrams/aegis-risk-medallion-architecture.svg)
+![RiskLens AI Architecture](../diagrams/aegis-risk-medallion-architecture.png)
 
 ## 4. Repository Structure
 
@@ -93,7 +93,6 @@ app/
     streamlit_app.py        Streamlit dashboard
 
 diagrams/
-  aegis-risk-medallion-architecture.svg
   aegis-risk-medallion-architecture.png
 
 screenshots/
@@ -425,7 +424,7 @@ Response:
 
 ```json
 {
-  "message": "Aegis-Risk API is online",
+  "message": "RiskLens AI API is online",
   "docs": "/docs",
   "status": "ready"
 }

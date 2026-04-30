@@ -1,8 +1,19 @@
-# Aegis-Risk: Agentic Geopolitical Risk Monitor
+# RiskLens AI: Geopolitical Risk Monitor
 
-Aegis-Risk is an LLM-powered multi-agent system for real-time geopolitical risk analysis across critical infrastructure domains such as oil transit routes, maritime chokepoints, and global energy supply chains.
+RiskLens AI is an LLM-powered multi-agent system for real-time geopolitical risk analysis across critical infrastructure domains such as oil transit routes, maritime chokepoints, and global energy supply chains.
 
 The project combines a Medallion-style data pipeline, retrieval-augmented generation, and adversarial multi-model verification to produce evidence-backed risk assessments with source visibility.
+
+## Project Goal
+
+The goal of RiskLens AI is to turn fast-moving global news into clear, evidence-backed risk intelligence. Instead of simply summarizing articles, the system filters noisy open-source reporting, retrieves the most relevant evidence, and produces verified geopolitical risk assessments that help analysts understand potential disruption to oil transit, shipping lanes, and energy supply chains.
+
+RiskLens AI is built as a practical decision-support tool for:
+
+- monitoring emerging geopolitical and maritime disruption signals
+- tracking risk trends over time through a Gold-layer risk index
+- grounding AI-generated assessments in retrieved source articles
+- making complex risk information easier to inspect through a dashboard
 
 ## Key Features
 
@@ -20,7 +31,7 @@ The project combines a Medallion-style data pipeline, retrieval-augmented genera
 
 ## System Overview
 
-Aegis-Risk is built as an end-to-end geopolitical risk intelligence pipeline. It collects open-source news, filters for operationally relevant disruption signals, stores clean evidence, retrieves the most relevant context for user questions, and generates verified risk assessments through a two-agent LLM workflow.
+RiskLens AI is built as an end-to-end geopolitical risk intelligence pipeline. It collects open-source news, filters for operationally relevant disruption signals, stores clean evidence, retrieves the most relevant context for user questions, and generates verified risk assessments through a two-agent LLM workflow.
 
 The system is organized around four main layers:
 
@@ -103,38 +114,13 @@ flowchart LR
     Latest --> Dashboard
 ```
 
-![Aegis-Risk Advanced AI-Medallion Architecture](diagrams/aegis-risk-medallion-architecture.svg)
-
-## LinkedIn Post Draft
-
-I built **Aegis-Risk**, an AI-powered geopolitical risk monitoring system for tracking disruption signals across oil transit routes, maritime chokepoints, and global energy supply chains.
-
-The project combines:
-
-- Open-source news ingestion from APIs, RSS feeds, and targeted web parsing
-- A Medallion-style data pipeline with Bronze, Silver, and Gold layers
-- ChromaDB vector retrieval for evidence-grounded context
-- A multi-agent LLM workflow with a Lead Analyst and Verification Critic
-- FastAPI backend services and a Streamlit control-center dashboard
-
-The goal is to move beyond generic news summarization and produce evidence-backed risk assessments with source visibility, risk scoring, and historical trend tracking.
-
-Architecture highlights:
-
-- Bronze layer stores raw article payloads for auditability
-- Silver layer stores cleaned and normalized evidence
-- Vector memory retrieves the most relevant sources for each question
-- GPT-4o generates the risk assessment
-- Claude verifies claims against the retrieved evidence
-- Gold layer stores final risk reports and time-series risk scores
-
-This was a great exercise in combining data engineering, RAG, multi-agent AI, and product-focused dashboard design into one applied decision-support system.
+![RiskLens AI Advanced AI-Medallion Architecture](diagrams/aegis-risk-medallion-architecture.png)
 
 ## Dashboard Preview
 
-![Aegis-Risk Dashboard](screenshots/dashboard.png)
-![Aegis-Risk AI Answers](screenshots/ai_answers.png)
-![Aegis-Risk Sources](screenshots/sources.png)
+![RiskLens AI Dashboard](screenshots/dashboard.png)
+![RiskLens AI Answers](screenshots/ai_answers.png)
+![RiskLens AI Sources](screenshots/sources.png)
 
 ## Run Locally
 

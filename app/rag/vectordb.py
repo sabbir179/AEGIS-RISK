@@ -3,7 +3,7 @@ import chromadb
 from datetime import datetime
 from mcp.server.fastmcp import FastMCP
 
-mcp = FastMCP("AegisRiskMemory")
+mcp = FastMCP("RiskLensMemory")
 
 
 class VectorDB:

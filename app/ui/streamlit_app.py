@@ -9,7 +9,7 @@ import streamlit as st
 API_BASE = "http://127.0.0.1:8000/api"
 
 st.set_page_config(
-    page_title="Aegis-Risk Control Center",
+    page_title="RiskLens AI Monitor",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -480,7 +480,7 @@ def render_hero(topic: str, evidence_count: int, consensus_status: str, tracked_
         f"""
         <div class="hero">
             <div class="hero-kicker">Operational Dashboard</div>
-            <h1 class="hero-title">Aegis-Risk Control Center</h1>
+            <h1 class="hero-title">RiskLens AI Monitor</h1>
             <p class="hero-subtitle">
                 Evidence-backed geopolitical monitoring for energy transit routes, maritime chokepoints,
                 and fast-moving strategic risk signals.
@@ -564,7 +564,7 @@ inject_css()
 init_session_state()
 
 with st.sidebar:
-    st.markdown("## Aegis-Risk")
+    st.markdown("## RiskLens AI")
     st.caption("Command rail for ingestion, evidence retrieval, and risk analysis.")
 
     topic = st.text_input("Focus topic", value=st.session_state["last_loaded_topic"])

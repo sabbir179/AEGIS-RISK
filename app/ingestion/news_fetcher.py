@@ -11,7 +11,7 @@ from app.core.config import settings
 from app.ingestion.parser import is_relevant_article
 from mcp.server.fastmcp import FastMCP
 
-mcp = FastMCP("AegisRiskIngestion")
+mcp = FastMCP("RiskLensIngestion")
 
 
 class NewsFetcher:
