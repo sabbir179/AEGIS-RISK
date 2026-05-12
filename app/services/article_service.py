@@ -1,3 +1,4 @@
+import logging
 from typing import Dict, List
 
 from sqlalchemy import and_, or_
@@ -7,6 +8,8 @@ from sqlalchemy.orm import Session
 from app.models.article import Article
 from app.rag.vectordb import add_article_to_vectordb
 
+
+logger = logging.getLogger(__name__)
 
 TRANSIT_KEYWORDS = [
     "oil transit",
@@ -256,7 +259,7 @@ class ArticleService:
         db.refresh(db_article)
 
         if not is_vector_relevant(article_data):
-            print(f"Skipped VectorDB (not transit-relevant): {db_article.title}")
+            logger.debug("Skipped VectorDB (not transit-relevant): %s", db_article.title)
             return db_article
 
         try:
@@ -283,12 +286,12 @@ class ArticleService:
                         "topic": db_article.topic or "",
                     },
                 )
-                print(f"VectorDB upserted: {db_article.title}")
+                logger.info("VectorDB upserted: %s", db_article.title)
             else:
-                print(f"Skipped VectorDB (empty text): {db_article.title}")
+                logger.debug("Skipped VectorDB (empty text): %s", db_article.title)
 
         except Exception as e:
-            print(f"VectorDB single upsert failed for '{db_article.title}': {e}")
+            logger.exception("VectorDB single upsert failed for '%s': %s", db_article.title, e)
 
         return db_article
 
@@ -303,7 +306,7 @@ class ArticleService:
 
         for article_data in articles:
             if not article_data.get("fingerprint"):
-                print(f"SKIPPING missing fingerprint: {article_data.get('title', 'Untitled')}")
+                logger.warning("Skipping missing fingerprint: %s", article_data.get("title", "Untitled"))
                 continue
 
             try:
@@ -314,7 +317,7 @@ class ArticleService:
                 inserted += 1
 
                 if not is_vector_relevant(article_data):
-                    print(f"Skipped VectorDB (not transit-relevant): {db_article.title}")
+                    logger.debug("Skipped VectorDB (not transit-relevant): %s", db_article.title)
                     continue
 
                 try:
@@ -330,7 +333,7 @@ class ArticleService:
                     ).strip()
 
                     if not vector_text:
-                        print(f"Skipped VectorDB (empty text): {db_article.title}")
+                        logger.debug("Skipped VectorDB (empty text): %s", db_article.title)
                         continue
 
                     add_article_to_vectordb(
@@ -344,19 +347,19 @@ class ArticleService:
                             "topic": db_article.topic or "",
                         },
                     )
-                    print(f"VectorDB upserted: {db_article.title}")
+                    logger.info("VectorDB upserted: %s", db_article.title)
 
                 except Exception as e:
-                    print(f"VectorDB upsert failed for '{db_article.title}': {e}")
+                    logger.exception("VectorDB upsert failed for '%s': %s", db_article.title, e)
 
             except IntegrityError:
                 db.rollback()
                 duplicates += 1
-                print(f"Duplicate skipped: {article_data.get('title', 'Untitled')}")
+                logger.info("Duplicate skipped: %s", article_data.get("title", "Untitled"))
 
             except Exception as e:
                 db.rollback()
-                print(f"Failed to save article '{article_data.get('title', 'Untitled')}': {e}")
+                logger.exception("Failed to save article '%s': %s", article_data.get("title", "Untitled"), e)
 
         return {
             "inserted": inserted,

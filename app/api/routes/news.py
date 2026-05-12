@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, Query, Body
 from sqlalchemy.orm import Session
+import logging
 import sqlite3
 
 from app.api.schemas.news import RefreshResponse, LatestNewsResponse, ArticleOut
@@ -10,6 +11,7 @@ from app.rag.vectordb import VectorDB
 from app.rag.llm_answer import AegisAgenticSystem
 from app.core.config import settings
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -25,7 +27,7 @@ def refresh_news():
             duplicates=result.get("duplicates", 0),
         )
     except Exception as e:
-        print(f"Refresh error: {e}")
+        logger.exception("Refresh error: %s", e)
         return RefreshResponse(
             status="error",
             fetched=0,
@@ -96,7 +98,7 @@ def get_gold_risk_data():
             for row in data
         ]
     except Exception as e:
-        print(f"Gold risk fetch error: {e}")
+        logger.exception("Gold risk fetch error: %s", e)
         return []
     finally:
         conn.close()

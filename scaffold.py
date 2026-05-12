@@ -1,4 +1,12 @@
+import logging
+
 from pathlib import Path
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
+)
+logger = logging.getLogger(__name__)
 
 PROJECT_FILES = {
     "app/__init__.py": "",
@@ -393,11 +401,11 @@ def create_project():
 
         if not path.exists():
             path.write_text(content, encoding="utf-8")
-            print(f"Created: {file_path}")
+            logger.info("Created: %s", file_path)
         else:
-            print(f"Skipped (already exists): {file_path}")
+            logger.info("Skipped (already exists): %s", file_path)
 
 
 if __name__ == "__main__":
     create_project()
-    print("\\nProject scaffold created successfully.")
+    logger.info("Project scaffold created successfully.")

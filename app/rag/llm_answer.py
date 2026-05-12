@@ -1,9 +1,12 @@
+import logging
 import re
 import sqlite3
 from datetime import datetime
 from openai import OpenAI
 from anthropic import Anthropic
 from app.core.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 class AegisAgenticSystem:
@@ -81,7 +84,7 @@ class AegisAgenticSystem:
             conn.close()
 
         except Exception as e:
-            print(f"❌ Gold Layer Persistence Error: {e}")
+            logger.exception("Gold Layer Persistence Error: %s", e)
 
     def _normalize_docs(self, docs: list) -> list:
         """

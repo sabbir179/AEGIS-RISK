@@ -1,3 +1,5 @@
+import logging
+
 from apscheduler.schedulers.background import BackgroundScheduler
 from app.core.config import settings
 from app.core.database import SessionLocal
@@ -5,6 +7,7 @@ from app.ingestion.news_fetcher import NewsFetcher
 from app.ingestion.parser import normalize_article, is_relevant_article
 from app.services.article_service import ArticleService
 
+logger = logging.getLogger(__name__)
 scheduler = BackgroundScheduler()
 
 
@@ -19,25 +22,25 @@ def refresh_news_job() -> dict:
 
         raw_articles = newsapi_articles + bbc_articles + aljazeera_articles
 
-        print("DEBUG newsapi_articles:", len(newsapi_articles))
-        print("DEBUG bbc_articles:", len(bbc_articles))
-        print("DEBUG aljazeera_articles:", len(aljazeera_articles))
-        print("DEBUG raw_articles_total:", len(raw_articles))
+        logger.debug("newsapi_articles: %s", len(newsapi_articles))
+        logger.debug("bbc_articles: %s", len(bbc_articles))
+        logger.debug("aljazeera_articles: %s", len(aljazeera_articles))
+        logger.debug("raw_articles_total: %s", len(raw_articles))
 
         filtered_articles = [
             article for article in raw_articles
             if is_relevant_article(article)
         ]
-        print("DEBUG filtered_articles:", len(filtered_articles))
+        logger.debug("filtered_articles: %s", len(filtered_articles))
 
         normalized_articles = [
             normalize_article(article, topic="middle-east-risk")
             for article in filtered_articles
         ]
-        print("DEBUG normalized_articles:", len(normalized_articles))
+        logger.debug("normalized_articles: %s", len(normalized_articles))
 
         result = ArticleService.save_articles(db, normalized_articles)
-        print("DEBUG save result:", result)
+        logger.debug("save result: %s", result)
 
         return {
             "status": "success",
@@ -47,7 +50,7 @@ def refresh_news_job() -> dict:
         }
 
     except Exception as exc:
-        print("ERROR:", str(exc))
+        logger.exception("News refresh job failed: %s", exc)
         return {
             "status": "error",
             "fetched": 0,

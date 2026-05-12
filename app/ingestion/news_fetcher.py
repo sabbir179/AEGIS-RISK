@@ -1,4 +1,5 @@
 import json
+import logging
 import sqlite3
 from datetime import datetime
 
@@ -11,6 +12,7 @@ from app.core.config import settings
 from app.ingestion.parser import is_relevant_article
 from mcp.server.fastmcp import FastMCP
 
+logger = logging.getLogger(__name__)
 mcp = FastMCP("RiskLensIngestion")
 
 
@@ -67,7 +69,7 @@ class NewsFetcher:
         }
 
         for name, articles in results.items():
-            print(f"DEBUG {name} fetched: {len(articles)}")
+            logger.debug("%s fetched: %s", name, len(articles))
             if articles:
                 self.save_to_bronze(articles, name)
 
@@ -140,7 +142,7 @@ class NewsFetcher:
             return self._extract_text_from_html(response.text)
 
         except Exception as e:
-            print(f"DEBUG full article fetch failed for {url}: {e}")
+            logger.debug("Full article fetch failed for %s: %s", url, e)
             return ""
 
     def _looks_like_placeholder(self, title: str, description: str, content: str) -> bool:
@@ -286,7 +288,7 @@ class NewsFetcher:
 
     def fetch_newsapi(self, query: str | None, page_size: int = 50) -> list[dict]:
         if not self.newsapi_key:
-            print("DEBUG NewsAPI: missing API key")
+            logger.warning("NewsAPI missing API key")
             return []
 
         url = "https://newsapi.org/v2/everything"
@@ -308,14 +310,14 @@ class NewsFetcher:
                 timeout=20,
                 verify=certifi.where(),
             )
-            print("DEBUG NewsAPI status:", response.status_code)
+            logger.debug("NewsAPI status: %s", response.status_code)
 
             data = response.json()
-            print("DEBUG NewsAPI response status:", data.get("status"))
-            print("DEBUG NewsAPI totalResults:", data.get("totalResults"))
+            logger.debug("NewsAPI response status: %s", data.get("status"))
+            logger.debug("NewsAPI totalResults: %s", data.get("totalResults"))
 
             if response.status_code != 200:
-                print("DEBUG NewsAPI error body:", data)
+                logger.warning("NewsAPI returned non-200 response: %s", data)
                 return []
 
             articles = data.get("articles", [])
@@ -337,7 +339,7 @@ class NewsFetcher:
             return cleaned
 
         except Exception as e:
-            print(f"DEBUG NewsAPI exception: {e}")
+            logger.exception("NewsAPI exception: %s", e)
             return []
 
     def fetch_bbc_rss(self) -> list[dict]:
@@ -370,7 +372,7 @@ class NewsFetcher:
                 timeout=20,
                 verify=certifi.where(),
             )
-            print(f"DEBUG RSS HTTP status for {name}:", response.status_code)
+            logger.debug("RSS HTTP status for %s: %s", name, response.status_code)
 
             if response.status_code != 200:
                 return []
@@ -378,7 +380,7 @@ class NewsFetcher:
             feed = feedparser.parse(response.text)
 
             if getattr(feed, "bozo", 0):
-                print(f"DEBUG RSS parse warning for {name}: {getattr(feed, 'bozo_exception', 'unknown')}")
+                logger.warning("RSS parse warning for %s: %s", name, getattr(feed, "bozo_exception", "unknown"))
 
             entries = []
             seen_links = set()
@@ -409,11 +411,11 @@ class NewsFetcher:
                 if normalized:
                     entries.append(normalized)
 
-            print(f"DEBUG RSS {name} entries:", len(entries))
+            logger.debug("RSS %s entries: %s", name, len(entries))
             return entries
 
         except Exception as e:
-            print(f"DEBUG RSS exception for {name}: {e}")
+            logger.exception("RSS exception for %s: %s", name, e)
             return []
 
     def fetch_aljazeera_page(self) -> list[dict]:
@@ -426,7 +428,7 @@ class NewsFetcher:
                 headers=self.default_headers,
                 verify=certifi.where(),
             )
-            print("DEBUG Al Jazeera status:", response.status_code)
+            logger.debug("Al Jazeera status: %s", response.status_code)
 
             if response.status_code != 200:
                 return []
@@ -470,9 +472,9 @@ class NewsFetcher:
                 if len(articles) >= 20:
                     break
 
-            print("DEBUG Al Jazeera parsed:", len(articles))
+            logger.debug("Al Jazeera parsed: %s", len(articles))
             return articles
 
         except Exception as e:
-            print(f"DEBUG Al Jazeera exception: {e}")
+            logger.exception("Al Jazeera exception: %s", e)
             return []
