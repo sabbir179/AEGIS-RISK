@@ -244,7 +244,13 @@ Practical operating and governance playbooks are available in [docs/playbooks](d
 
 ## Adoption And Usage Metrics
 
-RiskLens AI records lightweight operational metrics for generated risk reports in `data/usage_metrics.jsonl` by default. The metrics intentionally avoid personal data, API keys, full prompts, and full conversations. They track high-level adoption and quality signals such as run status, assistant ID, focus topic, evidence count, final risk score, evaluation status, citation count, latency, and failure counts. A summary is available from `GET /api/metrics/summary` and in the Streamlit Overview tab.
+RiskLens AI records lightweight operational metrics for generated risk reports in `data/usage_metrics.jsonl` by default. Set `USAGE_METRICS_PATH` to use another local path. The metrics intentionally avoid personal data, API keys, full prompts, full LLM responses, full conversations, and raw retrieved article bodies. They track high-level adoption and quality signals such as run status, assistant ID, focus topic, evidence count, final risk score, evaluation status, citation count, latency, and failure counts. A summary is available from `GET /api/metrics/summary` and in the Streamlit Overview tab.
+
+Local metrics files are ignored by git. To reset local usage metrics, delete the JSONL file:
+
+```bash
+rm -f data/usage_metrics.jsonl
+```
 
 ## Medallion Architecture
 

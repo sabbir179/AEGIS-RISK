@@ -30,6 +30,16 @@ ALLOWED_EVENT_FIELDS = {
     "error_type",
 }
 
+STRING_FIELD_LIMITS = {
+    "assistant_id": 80,
+    "focus_topic": 120,
+    "verification_state": 80,
+    "evaluation_status": 40,
+    "error_type": 80,
+}
+
+ALLOWED_STATUSES = {"success", "failed"}
+
 
 class UsageMetricsRecorder:
     def __init__(self, metrics_path: str | Path | None = None):
@@ -87,6 +97,12 @@ class UsageMetricsRecorder:
         }
         safe_event.setdefault("timestamp", datetime.now(timezone.utc).isoformat())
         safe_event.setdefault("status", "success")
+        if safe_event["status"] not in ALLOWED_STATUSES:
+            safe_event["status"] = "failed"
+
+        for string_key, limit in STRING_FIELD_LIMITS.items():
+            if string_key in safe_event and safe_event[string_key] is not None:
+                safe_event[string_key] = str(safe_event[string_key]).strip()[:limit]
 
         for numeric_key in [
             "evidence_count",

@@ -31,6 +31,12 @@ Pytest tests cover parsing, dedupe, vector response handling, LLM workflow behav
 
 The evaluation module checks groundedness signals, citation coverage, output structure, risk-score validity, critic/revision signals, warnings, and failures.
 
+### Adoption And Usage Metrics
+
+The metrics module records lightweight operational metadata in `data/usage_metrics.jsonl` by default, or another path set with `USAGE_METRICS_PATH`. It is designed for privacy-conscious monitoring and does not store personal data, API keys, full prompts, full LLM responses, full conversations, or raw article bodies.
+
+Tracked fields include run status, assistant ID, focus topic, evidence count, final risk score, evaluation status, citation count, uncertainty note count, human review point count, latency, and error category. Local metrics files are ignored by git and can be reset by deleting the JSONL file.
+
 ### Prompt Library
 
 Prompts are stored outside core business logic in `app/prompts/library.json` with metadata, versions, lifecycle status, owners, required inputs, expected outputs, and templates.
