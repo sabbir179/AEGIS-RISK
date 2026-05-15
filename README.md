@@ -202,6 +202,16 @@ The Streamlit UI is designed as a dashboard-style control center with:
 - a consensus workspace for analyst and critic outputs
 - an evidence feed with source cards and direct links to underlying articles
 
+## Evaluation
+
+RiskLens AI includes a lightweight local evaluator in `app/evaluation/` for checking final RAG/LLM risk assessments without calling external services. It measures groundedness signals, citation coverage, required output sections, risk-score validity, critic/revision signals, and evaluation timing metadata.
+
+Run the evaluation tests with:
+
+```bash
+pytest tests/test_evaluator.py
+```
+
 ## Medallion Architecture
 
 ### Bronze Layer
