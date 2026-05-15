@@ -1,7 +1,10 @@
+import logging
 import re
 import hashlib
 from datetime import datetime
 
+
+logger = logging.getLogger(__name__)
 
 GEOPOLITICAL_KEYWORDS = [
     "israel",
@@ -207,6 +210,10 @@ def is_relevant_article(article: dict) -> bool:
     - accepts strong oil/logistics disruption articles
     - avoids very weak placeholder content as the only evidence
     """
+    if not isinstance(article, dict):
+        logger.warning("Skipping malformed article payload during relevance check: %r", article)
+        return False
+
     title = clean_text(article.get("title"))
     description = clean_text(article.get("description") or article.get("summary"))
     content = clean_text(article.get("content"))
@@ -246,6 +253,9 @@ def is_relevant_article(article: dict) -> bool:
 
 
 def extract_source_name(article: dict) -> str:
+    if not isinstance(article, dict):
+        return "Unknown"
+
     source = article.get("source")
 
     if isinstance(source, dict):
@@ -263,6 +273,9 @@ def build_fingerprint(source: str, title: str, url: str) -> str:
 
 
 def normalize_published_at(article: dict) -> str:
+    if not isinstance(article, dict):
+        return datetime.utcnow().isoformat()
+
     published_at = article.get("publishedAt") or article.get("published_at")
 
     if published_at:
@@ -272,6 +285,10 @@ def normalize_published_at(article: dict) -> str:
 
 
 def normalize_article(article: dict, topic: str | None = None) -> dict:
+    if not isinstance(article, dict):
+        logger.warning("Normalizing malformed article payload as empty article: %r", article)
+        article = {}
+
     title = clean_text(article.get("title")) or "Untitled"
 
     raw_description = clean_text(article.get("description") or article.get("summary"))

@@ -1,3 +1,4 @@
+import logging
 import re
 from html import escape
 
@@ -6,7 +7,34 @@ import plotly.express as px
 import requests
 import streamlit as st
 
+from app.core.logging_config import configure_logging
+
+configure_logging()
+logger = logging.getLogger(__name__)
+
 API_BASE = "http://127.0.0.1:8000/api"
+
+
+def show_request_error(action: str, exc: Exception) -> None:
+    logger.exception("%s request failed: %s", action, exc)
+    st.error("The backend is unavailable right now. Please try again shortly.")
+
+
+def show_response_error(action: str, response: requests.Response) -> None:
+    message = f"{action} failed. Please try again shortly."
+    try:
+        payload = response.json()
+        if isinstance(payload, dict):
+            detail = payload.get("detail")
+            if isinstance(detail, dict):
+                message = detail.get("message") or message
+            else:
+                message = payload.get("message") or message
+    except ValueError:
+        logger.warning("%s returned non-JSON error response: %s", action, response.text[:500])
+
+    logger.warning("%s failed with status %s", action, response.status_code)
+    st.error(message)
 
 st.set_page_config(
     page_title="RiskLens AI Monitor",
@@ -578,11 +606,14 @@ with st.sidebar:
                 if response.status_code == 200:
                     result = response.json()
                     st.session_state["last_refresh"] = result
-                    st.success("Pipeline refresh completed.")
+                    if result.get("status") == "error":
+                        st.error("Pipeline refresh could not complete right now.")
+                    else:
+                        st.success("Pipeline refresh completed.")
                 else:
-                    st.error(f"Refresh failed: {response.status_code}")
+                    show_response_error("Refresh", response)
             except Exception as exc:
-                st.error(f"Refresh failed: {exc}")
+                show_request_error("Refresh", exc)
 
     if st.button("Load Silver Evidence"):
         try:
@@ -603,9 +634,9 @@ with st.sidebar:
                 else:
                     st.warning("No articles matched that topic.")
             else:
-                st.error(f"Load failed: {response.status_code}")
+                show_response_error("Load evidence", response)
         except Exception as exc:
-            st.error(f"Connection failed: {exc}")
+            show_request_error("Load evidence", exc)
 
     if st.button("Sync Gold Timeline"):
         try:
@@ -615,9 +646,9 @@ with st.sidebar:
                 st.success("Risk timeline synced.")
                 st.rerun()
             else:
-                st.error(f"Timeline fetch failed: {response.status_code}")
+                show_response_error("Timeline sync", response)
         except Exception as exc:
-            st.error(f"Timeline fetch failed: {exc}")
+            show_request_error("Timeline sync", exc)
 
     st.markdown("### Mission Settings")
     render_system_stack()
@@ -796,6 +827,11 @@ with consensus_tab:
 
                     if response.status_code == 200:
                         rag_data = response.json()
+                        if rag_data.get("status") == "error":
+                            st.error(rag_data.get("message", "Consensus is unavailable right now."))
+                            logger.warning("Consensus API returned error payload: %s", rag_data)
+                            st.stop()
+
                         full_answer = rag_data.get("answer", "")
                         analyst_text, critic_text = split_consensus_sections(full_answer)
 
@@ -811,9 +847,9 @@ with consensus_tab:
                         )
                         st.rerun()
                     else:
-                        st.error(f"Consensus request failed: {response.status_code}")
+                        show_response_error("Consensus", response)
                 except Exception as exc:
-                    st.error(f"Consensus request failed: {exc}")
+                    show_request_error("Consensus", exc)
 
     analyst_col, critic_col = st.columns(2)
 

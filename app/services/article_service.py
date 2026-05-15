@@ -2,7 +2,7 @@ import logging
 from typing import Dict, List
 
 from sqlalchemy import and_, or_
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.models.article import Article
@@ -139,113 +139,117 @@ class ArticleService:
         - If topic is oil/oil transit: require oil + transit style matching
         - If topic is iran/iran transit: require iran + prefer transit/oil context
         """
-        query = db.query(Article)
+        try:
+            query = db.query(Article)
 
-        if topic and topic.strip():
-            normalized_topic = topic.strip().lower()
+            if topic and topic.strip():
+                normalized_topic = topic.strip().lower()
 
-            if normalized_topic in ("oil", "oil transit"):
-                query = query.filter(
-                    and_(
-                        or_(
-                            Article.title.ilike("%oil%"),
-                            Article.summary.ilike("%oil%"),
-                            Article.content.ilike("%oil%"),
-                            Article.title.ilike("%crude%"),
-                            Article.summary.ilike("%crude%"),
-                            Article.content.ilike("%crude%"),
-                            Article.title.ilike("%fuel%"),
-                            Article.summary.ilike("%fuel%"),
-                            Article.content.ilike("%fuel%"),
-                            Article.title.ilike("%lng%"),
-                            Article.summary.ilike("%lng%"),
-                            Article.content.ilike("%lng%"),
-                        ),
-                        or_(
-                            Article.title.ilike("%transit%"),
-                            Article.summary.ilike("%transit%"),
-                            Article.content.ilike("%transit%"),
-                            Article.title.ilike("%tanker%"),
-                            Article.summary.ilike("%tanker%"),
-                            Article.content.ilike("%tanker%"),
-                            Article.title.ilike("%shipping%"),
-                            Article.summary.ilike("%shipping%"),
-                            Article.content.ilike("%shipping%"),
-                            Article.title.ilike("%maritime%"),
-                            Article.summary.ilike("%maritime%"),
-                            Article.content.ilike("%maritime%"),
-                            Article.title.ilike("%strait of hormuz%"),
-                            Article.summary.ilike("%strait of hormuz%"),
-                            Article.content.ilike("%strait of hormuz%"),
-                            Article.title.ilike("%hormuz%"),
-                            Article.summary.ilike("%hormuz%"),
-                            Article.content.ilike("%hormuz%"),
-                            Article.title.ilike("%port%"),
-                            Article.summary.ilike("%port%"),
-                            Article.content.ilike("%port%"),
-                            Article.title.ilike("%blockade%"),
-                            Article.summary.ilike("%blockade%"),
-                            Article.content.ilike("%blockade%"),
-                            Article.title.ilike("%navy%"),
-                            Article.summary.ilike("%navy%"),
-                            Article.content.ilike("%navy%"),
-                        ),
+                if normalized_topic in ("oil", "oil transit"):
+                    query = query.filter(
+                        and_(
+                            or_(
+                                Article.title.ilike("%oil%"),
+                                Article.summary.ilike("%oil%"),
+                                Article.content.ilike("%oil%"),
+                                Article.title.ilike("%crude%"),
+                                Article.summary.ilike("%crude%"),
+                                Article.content.ilike("%crude%"),
+                                Article.title.ilike("%fuel%"),
+                                Article.summary.ilike("%fuel%"),
+                                Article.content.ilike("%fuel%"),
+                                Article.title.ilike("%lng%"),
+                                Article.summary.ilike("%lng%"),
+                                Article.content.ilike("%lng%"),
+                            ),
+                            or_(
+                                Article.title.ilike("%transit%"),
+                                Article.summary.ilike("%transit%"),
+                                Article.content.ilike("%transit%"),
+                                Article.title.ilike("%tanker%"),
+                                Article.summary.ilike("%tanker%"),
+                                Article.content.ilike("%tanker%"),
+                                Article.title.ilike("%shipping%"),
+                                Article.summary.ilike("%shipping%"),
+                                Article.content.ilike("%shipping%"),
+                                Article.title.ilike("%maritime%"),
+                                Article.summary.ilike("%maritime%"),
+                                Article.content.ilike("%maritime%"),
+                                Article.title.ilike("%strait of hormuz%"),
+                                Article.summary.ilike("%strait of hormuz%"),
+                                Article.content.ilike("%strait of hormuz%"),
+                                Article.title.ilike("%hormuz%"),
+                                Article.summary.ilike("%hormuz%"),
+                                Article.content.ilike("%hormuz%"),
+                                Article.title.ilike("%port%"),
+                                Article.summary.ilike("%port%"),
+                                Article.content.ilike("%port%"),
+                                Article.title.ilike("%blockade%"),
+                                Article.summary.ilike("%blockade%"),
+                                Article.content.ilike("%blockade%"),
+                                Article.title.ilike("%navy%"),
+                                Article.summary.ilike("%navy%"),
+                                Article.content.ilike("%navy%"),
+                            ),
+                        )
                     )
-                )
 
-            elif normalized_topic in ("iran", "iran transit"):
-                query = query.filter(
-                    and_(
-                        or_(
-                            Article.title.ilike("%iran%"),
-                            Article.summary.ilike("%iran%"),
-                            Article.content.ilike("%iran%"),
-                        ),
-                        or_(
-                            Article.title.ilike("%transit%"),
-                            Article.summary.ilike("%transit%"),
-                            Article.content.ilike("%transit%"),
-                            Article.title.ilike("%oil%"),
-                            Article.summary.ilike("%oil%"),
-                            Article.content.ilike("%oil%"),
-                            Article.title.ilike("%tanker%"),
-                            Article.summary.ilike("%tanker%"),
-                            Article.content.ilike("%tanker%"),
-                            Article.title.ilike("%shipping%"),
-                            Article.summary.ilike("%shipping%"),
-                            Article.content.ilike("%shipping%"),
-                            Article.title.ilike("%maritime%"),
-                            Article.summary.ilike("%maritime%"),
-                            Article.content.ilike("%maritime%"),
-                            Article.title.ilike("%strait of hormuz%"),
-                            Article.summary.ilike("%strait of hormuz%"),
-                            Article.content.ilike("%strait of hormuz%"),
-                            Article.title.ilike("%hormuz%"),
-                            Article.summary.ilike("%hormuz%"),
-                            Article.content.ilike("%hormuz%"),
-                            Article.title.ilike("%blockade%"),
-                            Article.summary.ilike("%blockade%"),
-                            Article.content.ilike("%blockade%"),
-                            Article.title.ilike("%navy%"),
-                            Article.summary.ilike("%navy%"),
-                            Article.content.ilike("%navy%"),
-                        ),
+                elif normalized_topic in ("iran", "iran transit"):
+                    query = query.filter(
+                        and_(
+                            or_(
+                                Article.title.ilike("%iran%"),
+                                Article.summary.ilike("%iran%"),
+                                Article.content.ilike("%iran%"),
+                            ),
+                            or_(
+                                Article.title.ilike("%transit%"),
+                                Article.summary.ilike("%transit%"),
+                                Article.content.ilike("%transit%"),
+                                Article.title.ilike("%oil%"),
+                                Article.summary.ilike("%oil%"),
+                                Article.content.ilike("%oil%"),
+                                Article.title.ilike("%tanker%"),
+                                Article.summary.ilike("%tanker%"),
+                                Article.content.ilike("%tanker%"),
+                                Article.title.ilike("%shipping%"),
+                                Article.summary.ilike("%shipping%"),
+                                Article.content.ilike("%shipping%"),
+                                Article.title.ilike("%maritime%"),
+                                Article.summary.ilike("%maritime%"),
+                                Article.content.ilike("%maritime%"),
+                                Article.title.ilike("%strait of hormuz%"),
+                                Article.summary.ilike("%strait of hormuz%"),
+                                Article.content.ilike("%strait of hormuz%"),
+                                Article.title.ilike("%hormuz%"),
+                                Article.summary.ilike("%hormuz%"),
+                                Article.content.ilike("%hormuz%"),
+                                Article.title.ilike("%blockade%"),
+                                Article.summary.ilike("%blockade%"),
+                                Article.content.ilike("%blockade%"),
+                                Article.title.ilike("%navy%"),
+                                Article.summary.ilike("%navy%"),
+                                Article.content.ilike("%navy%"),
+                            ),
+                        )
                     )
-                )
 
-            else:
-                search_filter = f"%{topic.strip()}%"
-                query = query.filter(
-                    or_(
-                        Article.title.ilike(search_filter),
-                        Article.summary.ilike(search_filter),
-                        Article.content.ilike(search_filter),
-                        Article.source.ilike(search_filter),
-                        Article.topic.ilike(search_filter),
+                else:
+                    search_filter = f"%{topic.strip()}%"
+                    query = query.filter(
+                        or_(
+                            Article.title.ilike(search_filter),
+                            Article.summary.ilike(search_filter),
+                            Article.content.ilike(search_filter),
+                            Article.source.ilike(search_filter),
+                            Article.topic.ilike(search_filter),
+                        )
                     )
-                )
 
-        return query.order_by(Article.published_at.desc()).limit(limit).all()
+            return query.order_by(Article.published_at.desc()).limit(limit).all()
+        except SQLAlchemyError as exc:
+            logger.exception("Failed to retrieve latest articles: %s", exc)
+            raise
 
     @staticmethod
     def create_article(db: Session, article_data: Dict):
@@ -253,10 +257,19 @@ class ArticleService:
         Saves a single article to SQLite.
         Promotes to Chroma only if it is transit-relevant.
         """
-        db_article = Article(**article_data)
-        db.add(db_article)
-        db.commit()
-        db.refresh(db_article)
+        try:
+            db_article = Article(**article_data)
+            db.add(db_article)
+            db.commit()
+            db.refresh(db_article)
+        except IntegrityError:
+            db.rollback()
+            logger.info("Duplicate skipped: %s", article_data.get("title", "Untitled"))
+            return None
+        except SQLAlchemyError as exc:
+            db.rollback()
+            logger.exception("Failed to create article '%s': %s", article_data.get("title", "Untitled"), exc)
+            raise
 
         if not is_vector_relevant(article_data):
             logger.debug("Skipped VectorDB (not transit-relevant): %s", db_article.title)

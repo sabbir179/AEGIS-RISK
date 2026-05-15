@@ -6,6 +6,7 @@ from datetime import datetime
 import certifi
 import feedparser
 import requests
+from requests import RequestException
 from bs4 import BeautifulSoup
 
 from app.core.config import settings
@@ -32,26 +33,39 @@ class NewsFetcher:
         MEDALLION ARCHITECTURE: BRONZE LAYER
         Saves raw data exactly as received for verifiable audit trails.
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+        if not articles:
+            logger.debug("No Bronze articles to save for %s", source_name)
+            return
 
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS bronze_news (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                raw_json TEXT,
-                source_name TEXT,
-                ingested_at TIMESTAMP
-            )
-        """)
+        conn = None
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
 
-        for art in articles:
-            cursor.execute(
-                "INSERT INTO bronze_news (raw_json, source_name, ingested_at) VALUES (?, ?, ?)",
-                (json.dumps(art), source_name, datetime.now().isoformat())
-            )
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS bronze_news (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    raw_json TEXT,
+                    source_name TEXT,
+                    ingested_at TIMESTAMP
+                )
+            """)
 
-        conn.commit()
-        conn.close()
+            for art in articles:
+                cursor.execute(
+                    "INSERT INTO bronze_news (raw_json, source_name, ingested_at) VALUES (?, ?, ?)",
+                    (json.dumps(art), source_name, datetime.now().isoformat())
+                )
+
+            conn.commit()
+            logger.info("Saved %s raw articles to Bronze for %s", len(articles), source_name)
+        except (TypeError, sqlite3.Error) as exc:
+            if conn:
+                conn.rollback()
+            logger.exception("Failed to save Bronze articles for %s: %s", source_name, exc)
+        finally:
+            if conn:
+                conn.close()
 
     @mcp.tool()
     def fetch_all_sources(self, query: str = None) -> str:
@@ -141,8 +155,11 @@ class NewsFetcher:
 
             return self._extract_text_from_html(response.text)
 
-        except Exception as e:
+        except RequestException as e:
             logger.debug("Full article fetch failed for %s: %s", url, e)
+            return ""
+        except Exception as e:
+            logger.exception("Unexpected full article parsing failure for %s: %s", url, e)
             return ""
 
     def _looks_like_placeholder(self, title: str, description: str, content: str) -> bool:
@@ -250,6 +267,7 @@ class NewsFetcher:
         content = self._clean_text(content)
 
         if not title or not url:
+            logger.debug("Skipping malformed article payload from %s: missing title or URL", source_name)
             return None
 
         weak_initial_content = (
@@ -312,7 +330,16 @@ class NewsFetcher:
             )
             logger.debug("NewsAPI status: %s", response.status_code)
 
-            data = response.json()
+            try:
+                data = response.json()
+            except ValueError as exc:
+                logger.warning("NewsAPI returned malformed JSON: %s", exc)
+                return []
+
+            if not isinstance(data, dict):
+                logger.warning("NewsAPI returned unexpected JSON payload type: %s", type(data).__name__)
+                return []
+
             logger.debug("NewsAPI response status: %s", data.get("status"))
             logger.debug("NewsAPI totalResults: %s", data.get("totalResults"))
 
@@ -321,9 +348,16 @@ class NewsFetcher:
                 return []
 
             articles = data.get("articles", [])
+            if not isinstance(articles, list):
+                logger.warning("NewsAPI response did not include a valid articles list")
+                return []
+
             cleaned = []
 
             for art in articles:
+                if not isinstance(art, dict):
+                    logger.warning("Skipping malformed NewsAPI article payload: %r", art)
+                    continue
                 normalized = self._normalize_article_payload(
                     source_name=(art.get("source") or {}).get("name", "NewsAPI"),
                     title=art.get("title"),
@@ -338,8 +372,11 @@ class NewsFetcher:
 
             return cleaned
 
-        except Exception as e:
+        except RequestException as e:
             logger.exception("NewsAPI exception: %s", e)
+            return []
+        except Exception as e:
+            logger.exception("Unexpected NewsAPI processing exception: %s", e)
             return []
 
     def fetch_bbc_rss(self) -> list[dict]:
@@ -375,6 +412,7 @@ class NewsFetcher:
             logger.debug("RSS HTTP status for %s: %s", name, response.status_code)
 
             if response.status_code != 200:
+                logger.warning("RSS source %s returned non-200 status: %s", name, response.status_code)
                 return []
 
             feed = feedparser.parse(response.text)
@@ -385,7 +423,12 @@ class NewsFetcher:
             entries = []
             seen_links = set()
 
-            for e in feed.entries[:25]:
+            entries_payload = getattr(feed, "entries", []) or []
+            if not isinstance(entries_payload, list):
+                logger.warning("RSS source %s returned malformed entries payload", name)
+                return []
+
+            for e in entries_payload[:25]:
                 title = e.get("title")
                 link = e.get("link")
 
@@ -414,8 +457,11 @@ class NewsFetcher:
             logger.debug("RSS %s entries: %s", name, len(entries))
             return entries
 
-        except Exception as e:
+        except RequestException as e:
             logger.exception("RSS exception for %s: %s", name, e)
+            return []
+        except Exception as e:
+            logger.exception("Unexpected RSS parsing exception for %s: %s", name, e)
             return []
 
     def fetch_aljazeera_page(self) -> list[dict]:
@@ -431,6 +477,7 @@ class NewsFetcher:
             logger.debug("Al Jazeera status: %s", response.status_code)
 
             if response.status_code != 200:
+                logger.warning("Al Jazeera returned non-200 status: %s", response.status_code)
                 return []
 
             soup = BeautifulSoup(response.text, "lxml")
@@ -475,6 +522,9 @@ class NewsFetcher:
             logger.debug("Al Jazeera parsed: %s", len(articles))
             return articles
 
-        except Exception as e:
+        except RequestException as e:
             logger.exception("Al Jazeera exception: %s", e)
+            return []
+        except Exception as e:
+            logger.exception("Unexpected Al Jazeera parsing exception: %s", e)
             return []

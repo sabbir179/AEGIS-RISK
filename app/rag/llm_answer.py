@@ -9,6 +9,10 @@ from app.core.config import settings
 logger = logging.getLogger(__name__)
 
 
+class LLMGenerationError(Exception):
+    """Raised when an LLM response cannot be generated or parsed safely."""
+
+
 class AegisAgenticSystem:
     def __init__(self):
         self.openai_client = OpenAI(api_key=settings.openai_api_key)
@@ -56,6 +60,7 @@ class AegisAgenticSystem:
         risk_score = self._extract_risk_score(final_report)
         normalized_topic = self._normalize_topic_label(query)
 
+        conn = None
         try:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
@@ -81,10 +86,13 @@ class AegisAgenticSystem:
             )
 
             conn.commit()
-            conn.close()
+            logger.info("Saved consensus report to Gold Layer for topic: %s", normalized_topic)
 
         except Exception as e:
             logger.exception("Gold Layer Persistence Error: %s", e)
+        finally:
+            if conn:
+                conn.close()
 
     def _normalize_docs(self, docs: list) -> list:
         """
@@ -165,6 +173,19 @@ class AegisAgenticSystem:
 
         return "\n".join(part for part in parts if part).strip()
 
+    def _extract_openai_text(self, response) -> str:
+        """
+        Safely extract text from OpenAI chat completion responses.
+        """
+        choices = getattr(response, "choices", None)
+        if not choices:
+            return ""
+
+        first_choice = choices[0]
+        message = getattr(first_choice, "message", None)
+        content = getattr(message, "content", None)
+        return str(content).strip() if content else ""
+
     def generate_consensus_report(self, query: str, docs: list) -> str:
         """
         AGENTIC CONSENSUS: Lead Analyst vs Verification Critic.
@@ -216,9 +237,15 @@ class AegisAgenticSystem:
                     {"role": "user", "content": f"User Query:\n{query}\n\nContext Sources:\n{formatted_context}"}
                 ]
             )
-            analyst_report = analyst_resp.choices[0].message.content or ""
+            analyst_report = self._extract_openai_text(analyst_resp)
+            if not analyst_report:
+                raise LLMGenerationError("OpenAI returned an empty or malformed analyst response")
         except Exception as e:
-            return f"❌ Analyst Agent failed: {str(e)}"
+            logger.exception("Analyst Agent failed: %s", e)
+            return (
+                "The analyst model could not generate a report right now. "
+                "Please try again after refreshing the evidence."
+            )
 
         critic_task = (
             "You are a strict Verification Critic.\n\n"
@@ -273,22 +300,23 @@ class AegisAgenticSystem:
             final_critique = self._extract_anthropic_text(critic_resp)
 
             if not final_critique:
-                final_critique = (
-                    "Verification Report\n"
-                    "-------------------\n\n"
-                    "Supported Claims:\n"
-                    "- None\n\n"
-                    "Unsupported Claims:\n"
-                    "- None\n\n"
-                    "Missing Evidence:\n"
-                    "- None\n\n"
-                    "Final Verdict:\n"
-                    "- Partially Reliable\n\n"
-                    "Final Risk Score: 3"
-                )
+                raise LLMGenerationError("Anthropic returned an empty or malformed critic response")
 
         except Exception as e:
-            return f"❌ Critic Agent failed: {str(e)}"
+            logger.exception("Critic Agent failed: %s", e)
+            final_critique = (
+                "Verification Report\n"
+                "-------------------\n\n"
+                "Supported Claims:\n"
+                "- Verification could not be completed.\n\n"
+                "Unsupported Claims:\n"
+                "- Verification is unavailable right now.\n\n"
+                "Missing Evidence:\n"
+                "- Retry the critic step when the model provider is available.\n\n"
+                "Final Verdict:\n"
+                "- Partially Reliable\n\n"
+                "Final Risk Score: 3"
+            )
 
         final_output = (
             f"## 🏛️ AGENTIC CONSENSUS REPORT\n\n"

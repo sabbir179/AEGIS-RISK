@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, Query, Body
+from fastapi import APIRouter, Depends, Query, Body, HTTPException
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 import logging
 import sqlite3
@@ -7,7 +8,7 @@ from app.api.schemas.news import RefreshResponse, LatestNewsResponse, ArticleOut
 from app.core.database import get_db
 from app.ingestion.scheduler import refresh_news_job
 from app.services.article_service import ArticleService
-from app.rag.vectordb import VectorDB
+from app.rag.vectordb import VectorDB, VectorStoreError
 from app.rag.llm_answer import AegisAgenticSystem
 from app.core.config import settings
 
@@ -43,7 +44,17 @@ def latest_news(
     db: Session = Depends(get_db),
 ):
     """Retrieves the latest articles stored in the Silver Layer."""
-    articles = ArticleService.get_latest_articles(db, topic=topic, limit=limit)
+    try:
+        articles = ArticleService.get_latest_articles(db, topic=topic, limit=limit)
+    except Exception as e:
+        logger.exception("Latest news fetch failed: %s", e)
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "status": "error",
+                "message": "Unable to load latest articles right now.",
+            },
+        ) from e
 
     return LatestNewsResponse(
         topic=topic,
@@ -55,13 +66,47 @@ def latest_news(
 @router.post("/ask")
 def ask_news(query: str = Body(..., embed=True)):
     """Executes the multi-agent consensus workflow from vector memory."""
-    vector_engine = VectorDB()
-    agent_system = AegisAgenticSystem()
+    if not query or not query.strip():
+        return JSONResponse(
+            status_code=400,
+            content={
+                "status": "error",
+                "message": "Please provide a question to analyze.",
+            },
+        )
 
-    search_results = vector_engine.search_memory(query=query, n_results=8)
-    ai_answer = agent_system.generate_consensus_report(query, search_results)
+    try:
+        vector_engine = VectorDB()
+        agent_system = AegisAgenticSystem()
+        search_results = vector_engine.search_memory(query=query, n_results=8)
+        ai_answer = agent_system.generate_consensus_report(query, search_results)
+    except VectorStoreError as e:
+        logger.exception("Vector store error during ask flow: %s", e)
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "error",
+                "message": "Evidence search is temporarily unavailable.",
+                "answer": "Evidence search is temporarily unavailable. Please try again shortly.",
+                "verification_status": "Error",
+                "medallion_tier": "Gold",
+            },
+        )
+    except Exception as e:
+        logger.exception("Ask flow failed: %s", e)
+        return JSONResponse(
+            status_code=500,
+            content={
+                "status": "error",
+                "message": "Unable to generate an answer right now.",
+                "answer": "Unable to generate an answer right now. Please try again shortly.",
+                "verification_status": "Error",
+                "medallion_tier": "Gold",
+            },
+        )
 
     return {
+        "status": "success",
         "query": query,
         "answer": ai_answer,
         "verification_status": "Consensus Verified" if "No context found" not in ai_answer else "No Context",
@@ -73,10 +118,11 @@ def ask_news(query: str = Body(..., embed=True)):
 def get_gold_risk_data():
     """Fetches normalized data points for the Streamlit line chart."""
     db_path = settings.database_url.replace("sqlite:///", "")
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
+    conn = None
 
     try:
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
         cursor.execute("""
             SELECT
                 timestamp,
@@ -101,4 +147,5 @@ def get_gold_risk_data():
         logger.exception("Gold risk fetch error: %s", e)
         return []
     finally:
-        conn.close()
+        if conn:
+            conn.close()

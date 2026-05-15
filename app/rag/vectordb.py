@@ -1,19 +1,29 @@
+import logging
 import re
 import chromadb
 from datetime import datetime
 from mcp.server.fastmcp import FastMCP
 
+logger = logging.getLogger(__name__)
 mcp = FastMCP("RiskLensMemory")
+
+
+class VectorStoreError(Exception):
+    """Raised when Chroma vector store operations fail."""
 
 
 class VectorDB:
     def __init__(self):
-        self.client = chromadb.PersistentClient(path="./chroma_db")
+        try:
+            self.client = chromadb.PersistentClient(path="./chroma_db")
 
-        self.collection = self.client.get_or_create_collection(
-            name="aegis_risk_silver_context",
-            metadata={"hnsw:space": "cosine"}
-        )
+            self.collection = self.client.get_or_create_collection(
+                name="aegis_risk_silver_context",
+                metadata={"hnsw:space": "cosine"}
+            )
+        except Exception as exc:
+            logger.exception("Failed to initialize vector store: %s", exc)
+            raise VectorStoreError("Vector store is unavailable") from exc
 
     def _safe_text(self, value) -> str:
         if value is None:
@@ -130,12 +140,21 @@ class VectorDB:
         }
 
         clean_text = self._safe_text(text)
+        safe_article_id = self._safe_text(article_id)
 
-        self.collection.upsert(
-            ids=[self._safe_text(article_id)],
-            documents=[clean_text],
-            metadatas=[safe_metadata],
-        )
+        if not safe_article_id or not clean_text:
+            logger.warning("Skipping vector upsert with missing article id or text")
+            raise VectorStoreError("Vector upsert requires article id and text")
+
+        try:
+            self.collection.upsert(
+                ids=[safe_article_id],
+                documents=[clean_text],
+                metadatas=[safe_metadata],
+            )
+        except Exception as exc:
+            logger.exception("Vector upsert failed for article %s: %s", safe_article_id, exc)
+            raise VectorStoreError("Vector upsert failed") from exc
 
         return f"Article {article_id} successfully promoted to Silver Layer."
 
@@ -151,10 +170,18 @@ class VectorDB:
         # Fetch a wider pool first, then re-rank locally.
         initial_fetch = max(n_results * 3, 12)
 
-        results = self.collection.query(
-            query_texts=[safe_query],
-            n_results=initial_fetch,
-        )
+        try:
+            results = self.collection.query(
+                query_texts=[safe_query],
+                n_results=initial_fetch,
+            )
+        except Exception as exc:
+            logger.exception("Vector retrieval failed for query '%s': %s", safe_query, exc)
+            raise VectorStoreError("Vector retrieval failed") from exc
+
+        if not isinstance(results, dict):
+            logger.warning("Vector retrieval returned malformed result type: %s", type(results).__name__)
+            return []
 
         documents = results.get("documents", [])
         metadatas = results.get("metadatas", [])
