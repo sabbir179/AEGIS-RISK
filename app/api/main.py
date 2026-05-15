@@ -2,6 +2,7 @@ import sqlite3
 from fastapi import FastAPI
 from app.core.logging_config import configure_logging
 from app.core.database import Base, engine
+from app.api.routes.metrics import router as metrics_router
 from app.api.routes.news import router as news_router
 from app.ingestion.scheduler import start_scheduler
 from app.core.config import settings
@@ -54,3 +55,4 @@ def root():
 
 
 app.include_router(news_router, prefix="/api/news", tags=["news"])
+app.include_router(metrics_router, prefix="/api/metrics", tags=["metrics"])

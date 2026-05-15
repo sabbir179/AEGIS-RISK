@@ -85,6 +85,7 @@ def test_ask_endpoint_happy_path(monkeypatch):
 
     monkeypatch.setattr("app.api.routes.news.VectorDB", lambda: FakeVectorDB())
     monkeypatch.setattr("app.api.routes.news.AegisAgenticSystem", lambda: FakeAgent())
+    monkeypatch.setattr("app.api.routes.news.record_usage_event", lambda event: True)
 
     response = client.post("/api/news/ask", json={"query": "Assess oil risk"})
 
@@ -99,8 +100,32 @@ def test_ask_endpoint_handles_vector_store_failure(monkeypatch):
             raise VectorStoreError("down")
 
     monkeypatch.setattr("app.api.routes.news.VectorDB", lambda: FailingVectorDB())
+    monkeypatch.setattr("app.api.routes.news.record_usage_event", lambda event: True)
 
     response = client.post("/api/news/ask", json={"query": "Assess oil risk"})
 
     assert response.status_code == 503
     assert response.json()["message"] == "Evidence search is temporarily unavailable."
+
+
+def test_metrics_summary_endpoint(monkeypatch):
+    monkeypatch.setattr(
+        "app.api.routes.metrics.summarize_usage_events",
+        lambda: {
+            "total_runs": 2,
+            "successful_runs": 1,
+            "failed_runs": 1,
+            "most_used_assistant": "risk_analyst",
+            "most_common_topic": "oil",
+            "average_risk_score": 4.0,
+            "evaluation_status_counts": {"pass": 1, "fail": 1},
+            "average_evidence_count": 10,
+            "average_latency_ms": 3000,
+        },
+    )
+
+    response = client.get("/api/metrics/summary")
+
+    assert response.status_code == 200
+    assert response.json()["total_runs"] == 2
+    assert response.json()["most_used_assistant"] == "risk_analyst"

@@ -8,6 +8,7 @@ import requests
 import streamlit as st
 
 from app.core.logging_config import configure_logging
+from app.metrics import summarize_usage_events
 
 configure_logging()
 logger = logging.getLogger(__name__)
@@ -799,6 +800,21 @@ with overview_tab:
                 st.caption(label)
             with value_col:
                 st.markdown(f"**{value}**")
+
+        with st.expander("Usage Metrics", expanded=False):
+            try:
+                usage_summary = summarize_usage_events()
+                metric_a, metric_b = st.columns(2)
+                with metric_a:
+                    st.metric("Total Runs", usage_summary.get("total_runs", 0))
+                    st.metric("Avg Risk", usage_summary.get("average_risk_score") or "N/A")
+                with metric_b:
+                    st.metric("Most Used", usage_summary.get("most_used_assistant") or "N/A")
+                    st.metric("Top Topic", usage_summary.get("most_common_topic") or "N/A")
+                st.caption(f"Evaluation states: {usage_summary.get('evaluation_status_counts', {})}")
+            except Exception as exc:
+                logger.exception("Usage metrics summary failed in Streamlit: %s", exc)
+                st.caption("Usage metrics are unavailable.")
 
 with consensus_tab:
     question_col, meta_col = st.columns([1.7, 1])
