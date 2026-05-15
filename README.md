@@ -238,6 +238,10 @@ Available assistants:
 
 Assistant lifecycle statuses mirror prompt governance: `draft`, `testing`, `approved`, and `deprecated`. Assistant changes should be reviewed with their referenced prompts and evaluation results so persona-specific behavior remains traceable and governance-ready.
 
+## AI Enablement Playbooks
+
+Practical operating and governance playbooks are available in [docs/playbooks](docs/playbooks/README.md). They cover user workflows, assistant selection, prompt governance, evaluation, and production readiness.
+
 ## Medallion Architecture
 
 ### Bronze Layer
