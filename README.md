@@ -225,6 +225,19 @@ Prompt lifecycle statuses are:
 
 Prompt changes should be reviewed like code changes: update the version, document the reason for the change, run the prompt loader tests, and use evaluation results from `app/evaluation/` to support promotion from `testing` to `approved`.
 
+## Assistant Registry
+
+Persona-based assistant definitions live in `app/assistants/registry.json`. Each assistant includes lifecycle metadata, intended persona, use case, output style, expected sections, and the prompt IDs it uses from the prompt library.
+
+Available assistants:
+
+- `risk_analyst`: detailed evidence-based risk assessment for analyst users.
+- `executive_briefing`: concise senior-management summary focused on decision points and commercial impact.
+- `compliance_review`: auditability, uncertainty, unsupported claims, and escalation review.
+- `market_intelligence`: trends, commercial implications, and monitoring signals.
+
+Assistant lifecycle statuses mirror prompt governance: `draft`, `testing`, `approved`, and `deprecated`. Assistant changes should be reviewed with their referenced prompts and evaluation results so persona-specific behavior remains traceable and governance-ready.
+
 ## Medallion Architecture
 
 ### Bronze Layer

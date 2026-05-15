@@ -1,0 +1,100 @@
+{
+  "assistants": [
+    {
+      "assistant_id": "risk_analyst",
+      "name": "Risk Analyst Assistant",
+      "persona": "Risk Analyst",
+      "purpose": "Detailed evidence-based risk assessment",
+      "use_case": "Generate structured, source-backed geopolitical and supply-chain risk assessments for analyst users.",
+      "status": "approved",
+      "owner": "RiskLens AI",
+      "prompt_ids": [
+        "risk_analyst_initial_assessment",
+        "critic_review",
+        "analyst_revision"
+      ],
+      "output_style": "structured, analytical, evidence-heavy",
+      "expected_sections": [
+        "Final Risk Score",
+        "Concise Summary",
+        "Key Evidence",
+        "Uncertainty Notes",
+        "Recommended Human Review Points"
+      ],
+      "version": "1.0.0",
+      "last_updated": "2026-05-15"
+    },
+    {
+      "assistant_id": "executive_briefing",
+      "name": "Executive Briefing Assistant",
+      "persona": "Senior Management / Executive",
+      "purpose": "Short decision-focused summary for senior stakeholders",
+      "use_case": "Translate risk assessments into concise decision points, commercial impact, and escalation needs.",
+      "status": "testing",
+      "owner": "RiskLens AI",
+      "prompt_ids": [
+        "executive_briefing_summary",
+        "critic_review",
+        "analyst_revision"
+      ],
+      "output_style": "concise, commercial impact, decision points",
+      "expected_sections": [
+        "Executive Summary",
+        "Decision Points",
+        "Commercial Impact",
+        "Uncertainty Notes",
+        "Recommended Actions"
+      ],
+      "version": "1.0.0",
+      "last_updated": "2026-05-15"
+    },
+    {
+      "assistant_id": "compliance_review",
+      "name": "Compliance Review Assistant",
+      "persona": "Compliance / Risk Control",
+      "purpose": "Auditability, uncertainty, unsupported claims, escalation points",
+      "use_case": "Review assessment outputs for traceability, unsupported claims, uncertainty, evidence coverage, and governance escalation.",
+      "status": "testing",
+      "owner": "RiskLens AI",
+      "prompt_ids": [
+        "compliance_review_summary",
+        "critic_review",
+        "analyst_revision"
+      ],
+      "output_style": "cautious, evidence-focused, governance-oriented",
+      "expected_sections": [
+        "Auditability Summary",
+        "Unsupported Claims",
+        "Evidence Coverage",
+        "Uncertainty Notes",
+        "Escalation Points"
+      ],
+      "version": "1.0.0",
+      "last_updated": "2026-05-15"
+    },
+    {
+      "assistant_id": "market_intelligence",
+      "name": "Market Intelligence Assistant",
+      "persona": "Market Intelligence Analyst",
+      "purpose": "Trends, commercial implications, monitoring signals",
+      "use_case": "Identify market-relevant trends, commercial implications, and monitoring signals from evidence-backed risk assessments.",
+      "status": "testing",
+      "owner": "RiskLens AI",
+      "prompt_ids": [
+        "risk_analyst_initial_assessment",
+        "executive_briefing_summary",
+        "analyst_revision"
+      ],
+      "output_style": "trend-focused, signal-oriented, business impact",
+      "expected_sections": [
+        "Trend Summary",
+        "Commercial Implications",
+        "Monitoring Signals",
+        "Uncertainty Notes",
+        "Recommended Actions"
+      ],
+      "version": "1.0.0",
+      "last_updated": "2026-05-15"
+    }
+  ]
+}
