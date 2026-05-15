@@ -107,6 +107,7 @@ Pygments==2.19.2
 PyJWT==2.12.1
 pyperclip==1.11.0
 PyPika==0.51.1
+pytest==9.0.2
 pyproject_hooks==1.2.0
 python-dateutil==2.9.0.post0
 python-dotenv==1.2.2
