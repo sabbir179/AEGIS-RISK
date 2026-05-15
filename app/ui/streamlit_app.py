@@ -363,6 +363,7 @@ def init_session_state() -> None:
     st.session_state.setdefault("analyst_output", "")
     st.session_state.setdefault("critic_output", "")
     st.session_state.setdefault("raw_consensus_output", "")
+    st.session_state.setdefault("consensus_audit", {})
     st.session_state.setdefault("verification_status", "Awaiting consensus run")
     st.session_state.setdefault("medallion_tier", "Gold")
     st.session_state.setdefault("last_refresh", {})
@@ -398,6 +399,24 @@ def split_consensus_sections(full_text: str) -> tuple[str, str]:
         analyst_text = full_text.replace("## AGENTIC CONSENSUS REPORT", "").strip()
 
     return analyst_text, critic_text
+
+
+def has_debug_content(value) -> bool:
+    if isinstance(value, dict):
+        return any(has_debug_content(item) for item in value.values())
+    if isinstance(value, list):
+        return any(has_debug_content(item) for item in value)
+    return bool(str(value or "").strip())
+
+
+def clean_display_markdown(value: str) -> str:
+    """
+    Keep generated markdown focused on report content if a stale UI/model value
+    includes raw layout tags.
+    """
+    text = str(value or "")
+    text = re.sub(r"^\s*</?div[^>]*>\s*$", "", text, flags=re.IGNORECASE | re.MULTILINE)
+    return text.strip()
 
 
 def extract_risk_score(text: str) -> int | None:
@@ -552,6 +571,9 @@ def render_system_stack() -> None:
 
 
 def render_agent_panel(title: str, label: str, css_class: str, body: str) -> None:
+    if not body or not body.strip():
+        return
+
     st.markdown(
         f"""
             <div class="agent-label {css_class}">{escape(label)}</div>
@@ -562,7 +584,7 @@ def render_agent_panel(title: str, label: str, css_class: str, body: str) -> Non
         """,
         unsafe_allow_html=True,
     )
-    st.markdown(body if body else "No output returned yet.")
+    st.markdown(clean_display_markdown(body))
 
 
 def render_evidence_card(article: dict) -> None:
@@ -669,6 +691,7 @@ trend_snapshot = get_topic_trend_snapshot(gold_df, topic)
 consensus_score = extract_risk_score(st.session_state["analyst_output"])
 consensus_label = risk_label(consensus_score)
 consensus_state = st.session_state["verification_status"]
+final_assessment = st.session_state["raw_consensus_output"]
 
 render_hero(
     topic=topic,
@@ -769,26 +792,13 @@ with overview_tab:
             ("Medallion tier", st.session_state["medallion_tier"]),
         ]
 
-        snapshot_html = "".join(
-            f"""
-            <div class="status-item">
-                <span class="status-label">{escape(label)}</span>
-                <span class="status-value">{escape(str(value))}</span>
-            </div>
-            """
-            for label, value in snapshot_items
-        )
-        st.markdown(
-            f"""
-            <div class="section-card">
-                <div class="section-title">Live Signals</div>
-                <div class="status-list">
-                    {snapshot_html}
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        st.markdown("### Live Signals")
+        for label, value in snapshot_items:
+            label_col, value_col = st.columns([1.1, 1])
+            with label_col:
+                st.caption(label)
+            with value_col:
+                st.markdown(f"**{value}**")
 
 with consensus_tab:
     question_col, meta_col = st.columns([1.7, 1])
@@ -807,7 +817,7 @@ with consensus_tab:
     with meta_col:
         render_card(
             "Run Conditions",
-            "Consensus works best after you load topic-specific evidence. The result below is split into analyst reasoning and critic verification.",
+            "Consensus works best after you load topic-specific evidence. The result below is the revised final assessment.",
         )
         st.caption(f"Evidence available: {len(articles_data)}")
         st.caption(f"Verification state: {consensus_state}")
@@ -838,6 +848,7 @@ with consensus_tab:
                         st.session_state["raw_consensus_output"] = full_answer
                         st.session_state["analyst_output"] = analyst_text
                         st.session_state["critic_output"] = critic_text
+                        st.session_state["consensus_audit"] = rag_data.get("audit", {})
                         st.session_state["verification_status"] = rag_data.get(
                             "verification_status", "Consensus returned"
                         )
@@ -851,23 +862,44 @@ with consensus_tab:
                 except Exception as exc:
                     show_request_error("Consensus", exc)
 
-    analyst_col, critic_col = st.columns(2)
-
-    with analyst_col:
-        render_agent_panel(
-            title="Lead Analyst Assessment",
-            label="Analyst",
-            css_class="analyst",
-            body=st.session_state["analyst_output"],
+    if final_assessment:
+        render_card(
+            "Final Risk Assessment",
+            "Decision-focused assessment revised after internal critic review.",
+        )
+        st.markdown(clean_display_markdown(final_assessment))
+    else:
+        st.markdown(
+            """
+            <div class="empty-state">
+                Run Multi-Model Consensus to generate the revised final assessment.
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
-    with critic_col:
-        render_agent_panel(
-            title="Critic Verification",
-            label="Critic",
-            css_class="critic",
-            body=st.session_state["critic_output"],
-        )
+    audit_data = st.session_state.get("consensus_audit", {})
+    legacy_analyst = st.session_state.get("analyst_output", "")
+    legacy_critic = st.session_state.get("critic_output", "")
+
+    if has_debug_content(audit_data) or legacy_critic:
+        with st.expander("Audit / Debug Details", expanded=False):
+            if has_debug_content(audit_data):
+                st.json(audit_data)
+            if legacy_analyst and legacy_analyst != final_assessment:
+                render_agent_panel(
+                    title="Lead Analyst Draft",
+                    label="Analyst",
+                    css_class="analyst",
+                    body=legacy_analyst,
+                )
+            if legacy_critic:
+                render_agent_panel(
+                    title="Critic Feedback",
+                    label="Critic",
+                    css_class="critic",
+                    body=legacy_critic,
+                )
 
 with evidence_tab:
     header_col, detail_col = st.columns([1.4, 1])

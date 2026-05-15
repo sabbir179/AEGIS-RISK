@@ -1,4 +1,5 @@
 import logging
+import json
 import re
 import sqlite3
 from datetime import datetime
@@ -18,6 +19,7 @@ class AegisAgenticSystem:
         self.openai_client = OpenAI(api_key=settings.openai_api_key)
         self.anthropic_client = Anthropic(api_key=settings.anthropic_api_key)
         self.db_path = settings.database_url.replace("sqlite:///", "")
+        self.last_audit = {}
 
     def _extract_risk_score(self, text: str) -> int:
         """
@@ -186,9 +188,76 @@ class AegisAgenticSystem:
         content = getattr(message, "content", None)
         return str(content).strip() if content else ""
 
+    def _default_critic_feedback(self, reason: str) -> dict:
+        return {
+            "unsupported_claims": [],
+            "missing_evidence": ["Critic review could not be completed."],
+            "uncertainty_areas": ["Use the initial analyst assessment with caution."],
+            "risk_score_concerns": [reason],
+            "suggested_improvements": ["Ask a human reviewer to validate the final risk score and citations."],
+        }
+
+    def _parse_critic_feedback(self, value: str) -> dict:
+        """
+        Parse critic feedback when it is valid JSON; otherwise keep the raw text
+        in a structured fallback for auditability.
+        """
+        if not value:
+            raise LLMGenerationError("Critic returned empty feedback")
+
+        try:
+            parsed = json.loads(value)
+        except json.JSONDecodeError:
+            logger.warning("Critic feedback was not valid JSON; preserving raw feedback for audit")
+            return {
+                "unsupported_claims": [],
+                "missing_evidence": [],
+                "uncertainty_areas": ["Critic feedback was returned as unstructured text."],
+                "risk_score_concerns": [],
+                "suggested_improvements": [value.strip()],
+            }
+
+        if not isinstance(parsed, dict):
+            raise LLMGenerationError("Critic feedback JSON was not an object")
+
+        expected_keys = [
+            "unsupported_claims",
+            "missing_evidence",
+            "uncertainty_areas",
+            "risk_score_concerns",
+            "suggested_improvements",
+        ]
+
+        normalized = {}
+        for key in expected_keys:
+            item = parsed.get(key, [])
+            if isinstance(item, list):
+                normalized[key] = [str(value).strip() for value in item if str(value).strip()]
+            elif item:
+                normalized[key] = [str(item).strip()]
+            else:
+                normalized[key] = []
+
+        return normalized
+
+    def _format_fallback_report(self, analyst_report: str, warning: str) -> str:
+        risk_score = self._extract_risk_score(analyst_report)
+        return (
+            "## Final Risk Assessment\n\n"
+            f"Final Risk Score: {risk_score}\n\n"
+            "### Concise Summary\n"
+            f"{analyst_report.strip()}\n\n"
+            "### Key Evidence\n"
+            "- See cited sources in the analyst assessment above.\n\n"
+            "### Uncertainty Notes\n"
+            f"- {warning}\n\n"
+            "### Recommended Human Review Points\n"
+            "- Validate source coverage and risk score before operational use."
+        )
+
     def generate_consensus_report(self, query: str, docs: list) -> str:
         """
-        AGENTIC CONSENSUS: Lead Analyst vs Verification Critic.
+        AGENTIC CONSENSUS: analyst draft -> critic feedback -> analyst revision.
         """
         formatted_context = self._prepare_context(docs)
 
@@ -253,37 +322,26 @@ class AegisAgenticSystem:
             "Do NOT use outside knowledge.\n"
             "Do NOT hallucinate.\n"
             "If a claim is not clearly supported by the context, mark it unsupported.\n\n"
-            "You MUST follow this exact structure and fill every section:\n\n"
-            "Verification Report\n"
-            "-------------------\n\n"
-            "Supported Claims:\n"
-            "- <claim> -> [Source X]\n"
-            "- <claim> -> [Source Y]\n"
-            "If none, write: None\n\n"
-            "Unsupported Claims:\n"
-            "- <claim> -> <reason>\n"
-            "If none, write: None\n\n"
-            "Missing Evidence:\n"
-            "- <what is missing>\n"
-            "If none, write: None\n\n"
-            "Final Verdict:\n"
-            "- Reliable\n"
-            "or\n"
-            "- Partially Reliable\n"
-            "or\n"
-            "- Unreliable\n\n"
-            "Final Risk Score: <number between 1 and 5 only>\n\n"
+            "Return JSON only with exactly these keys:\n"
+            "{\n"
+            '  "unsupported_claims": ["claim and reason"],\n'
+            '  "missing_evidence": ["evidence gap"],\n'
+            '  "uncertainty_areas": ["uncertain area"],\n'
+            '  "risk_score_concerns": ["risk score concern"],\n'
+            '  "suggested_improvements": ["specific revision instruction"]\n'
+            "}\n\n"
             "IMPORTANT:\n"
-            "- Do not leave any section blank\n"
-            "- Be specific\n"
-            "- Keep the output concise but complete\n"
-            "- You MUST output a numeric final risk score\n"
+            "- Keep each list concise\n"
+            "- Use empty arrays if a category has no findings\n"
+            "- Do not include markdown outside the JSON\n"
         )
 
+        critic_feedback = None
+        critic_warning = None
         try:
             critic_resp = self.anthropic_client.messages.create(
                 model="claude-sonnet-4-6",
-                max_tokens=1500,
+                max_tokens=1000,
                 system=critic_task,
                 messages=[
                     {
@@ -297,33 +355,66 @@ class AegisAgenticSystem:
                 ]
             )
 
-            final_critique = self._extract_anthropic_text(critic_resp)
-
-            if not final_critique:
-                raise LLMGenerationError("Anthropic returned an empty or malformed critic response")
+            critic_text = self._extract_anthropic_text(critic_resp)
+            critic_feedback = self._parse_critic_feedback(critic_text)
 
         except Exception as e:
             logger.exception("Critic Agent failed: %s", e)
-            final_critique = (
-                "Verification Report\n"
-                "-------------------\n\n"
-                "Supported Claims:\n"
-                "- Verification could not be completed.\n\n"
-                "Unsupported Claims:\n"
-                "- Verification is unavailable right now.\n\n"
-                "Missing Evidence:\n"
-                "- Retry the critic step when the model provider is available.\n\n"
-                "Final Verdict:\n"
-                "- Partially Reliable\n\n"
-                "Final Risk Score: 3"
-            )
+            critic_warning = "Critic review failed; final report falls back to the initial analyst assessment."
+            critic_feedback = self._default_critic_feedback(critic_warning)
 
-        final_output = (
-            f"## 🏛️ AGENTIC CONSENSUS REPORT\n\n"
-            f"### LEAD ANALYST ASSESSMENT\n{analyst_report.strip()}\n\n"
-            f"---\n"
-            f"### CRITIC VERIFICATION\n{final_critique.strip()}"
+        revision_task = (
+            "You are the Lead Geopolitical Risk Analyst revising your assessment once.\n\n"
+            "Use ONLY the provided context and the critic feedback.\n"
+            "Remove or qualify unsupported claims.\n"
+            "Preserve source citations such as [Source 1].\n"
+            "Do not show the raw critic feedback.\n\n"
+            "Return a short decision-focused report with exactly these sections:\n\n"
+            "## Final Risk Assessment\n\n"
+            "Final Risk Score: <number between 1 and 5>\n\n"
+            "### Concise Summary\n"
+            "<3-5 sentences>\n\n"
+            "### Key Evidence\n"
+            "- <evidence point with [Source X]>\n"
+            "- <evidence point with [Source Y]>\n\n"
+            "### Uncertainty Notes\n"
+            "- <uncertainty or evidence limitation>\n\n"
+            "### Recommended Human Review Points\n"
+            "- <specific issue a human should validate>\n\n"
+            "Keep the output concise and operational."
         )
+
+        try:
+            revision_resp = self.openai_client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {"role": "system", "content": revision_task},
+                    {
+                        "role": "user",
+                        "content": (
+                            f"User Query:\n{query}\n\n"
+                            f"Context Sources:\n{formatted_context}\n\n"
+                            f"Initial Analyst Assessment:\n{analyst_report}\n\n"
+                            f"Critic Feedback JSON:\n{json.dumps(critic_feedback, indent=2)}"
+                        )
+                    },
+                ],
+            )
+            final_output = self._extract_openai_text(revision_resp)
+            if not final_output:
+                raise LLMGenerationError("OpenAI returned an empty or malformed revision response")
+        except Exception as e:
+            logger.exception("Analyst revision failed: %s", e)
+            revision_warning = "Revision step failed; final report falls back to the initial analyst assessment."
+            final_output = self._format_fallback_report(analyst_report, revision_warning)
+
+        self.last_audit = {
+            "initial_analyst_assessment": analyst_report,
+            "critic_feedback": critic_feedback,
+            "critic_warning": critic_warning,
+            "final_risk_score": self._extract_risk_score(final_output),
+        }
+        logger.debug("Actor-critic-revision audit: %s", self.last_audit)
 
         self.save_to_gold_layer(query, final_output)
         return final_output

@@ -109,6 +109,7 @@ def ask_news(query: str = Body(..., embed=True)):
         "status": "success",
         "query": query,
         "answer": ai_answer,
+        "audit": getattr(agent_system, "last_audit", {}),
         "verification_status": "Consensus Verified" if "No context found" not in ai_answer else "No Context",
         "medallion_tier": "Gold",
     }
