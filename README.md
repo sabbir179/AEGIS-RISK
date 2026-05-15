@@ -1,46 +1,51 @@
-# RiskLens AI: Geopolitical Risk Monitor
+# AEGIS-RISK / RiskLens AI
 
-RiskLens AI is an LLM-powered multi-agent system for real-time geopolitical risk analysis across critical infrastructure domains such as oil transit routes, maritime chokepoints, and global energy supply chains.
+AEGIS-RISK / RiskLens AI is a production-minded GenAI risk intelligence platform for evidence-grounded geopolitical monitoring. It combines open-source news ingestion, a Bronze / Silver / Gold data pipeline, RAG evidence retrieval, an analyst -> critic -> revision workflow, LLM/RAG evaluation checks, prompt governance, persona-based assistants, privacy-conscious usage metrics, and a Streamlit operational dashboard.
 
-The project combines a Medallion-style data pipeline, retrieval-augmented generation, and adversarial multi-model verification to produce evidence-backed risk assessments with source visibility.
+This is a portfolio / prototype system that demonstrates enterprise AI enablement patterns. It is not presented as a fully production-deployed or regulated risk platform.
 
-## Project Goal
+## Problem Statement
 
-The goal of RiskLens AI is to turn fast-moving global news into clear, evidence-backed risk intelligence. Instead of simply summarizing articles, the system filters noisy open-source reporting, retrieves the most relevant evidence, and produces verified geopolitical risk assessments that help analysts understand potential disruption to oil transit, shipping lanes, and energy supply chains.
+Business users need timely risk intelligence, but raw news feeds are noisy, duplicated, and difficult to turn into decision-ready analysis. LLM outputs also need grounding, verification, uncertainty handling, and human review before they can support operational decisions.
 
-RiskLens AI is built as a practical decision-support tool for:
+Enterprise AI systems need more than a model call. They need reusable workflows, prompt governance, evaluation, adoption monitoring, error handling, and clear escalation points. RiskLens AI demonstrates those patterns in the context of geopolitical and supply-chain risk monitoring.
 
-- monitoring emerging geopolitical and maritime disruption signals
-- tracking risk trends over time through a Gold-layer risk index
-- grounding AI-generated assessments in retrieved source articles
-- making complex risk information easier to inspect through a dashboard
+## Business Value
+
+RiskLens AI helps teams:
+
+- reduce manual monitoring effort across news and risk signals
+- produce evidence-backed decision support with source references
+- surface uncertainty, missing evidence, and escalation points
+- support senior-management updates and analyst review workflows
+- operationalize reusable AI assistants, prompts, evaluation, and usage metrics
 
 ## Key Features
 
-- Multi-agent reasoning workflow
-  - Lead Analyst: GPT-4o
-  - Verification Critic: Claude 4.6
-  - Optional Refiner: Groq / Llama-3
-- Medallion architecture
-  - Bronze: raw ingestion and audit trail
-  - Silver: cleaned and structured articles
-  - Gold: risk scoring and historical trend tracking
-- Geopolitical retrieval focused on oil transit, chokepoints, shipping lanes, and disruption signals
-- Evidence-backed outputs tied to source articles
-- Streamlit control-center dashboard for operators and demos
+- Medallion-style Bronze / Silver / Gold data pipeline
+- NewsAPI, RSS, and targeted web parsing ingestion
+- Transit-focused article filtering and deduplication
+- ChromaDB-backed RAG evidence retrieval
+- Analyst -> Critic -> Revision workflow for final assessments
+- Final Risk Assessment with risk score, summary, evidence, uncertainty notes, and human review points
+- Local LLM/RAG evaluation module with pass / warning / fail checks
+- Enterprise-style prompt library with metadata, versions, and lifecycle status
+- Persona-based assistant registry for analyst, executive, compliance, and market-intelligence users
+- Privacy-conscious adoption and usage metrics
+- AI enablement playbooks / knowledge hub documentation
+- FastAPI backend and Streamlit dashboard
+- Pytest suite, logging, and production-oriented error handling
 
-## System Overview
+## Architecture Overview
 
-RiskLens AI is built as an end-to-end geopolitical risk intelligence pipeline. It collects open-source news, filters for operationally relevant disruption signals, stores clean evidence, retrieves the most relevant context for user questions, and generates verified risk assessments through a two-agent LLM workflow.
+RiskLens AI is organized as an end-to-end risk intelligence workflow:
 
-The system is organized around four main layers:
-
-- **Ingestion Layer**: pulls articles from NewsAPI, BBC RSS, Al Jazeera, and other regional sources.
-- **Medallion Data Layer**: preserves raw records in Bronze, stores normalized articles in Silver, and persists verified risk scores in Gold.
-- **RAG + Agentic Reasoning Layer**: retrieves evidence from ChromaDB, generates an analyst report with GPT-4o, and verifies it with Claude.
-- **Application Layer**: exposes FastAPI endpoints and a Streamlit dashboard for refresh, search, risk timeline, source review, and AI-generated assessment.
-
-## System Architecture
+- **Sources**: NewsAPI, RSS feeds, and targeted web parsing collect open-source reporting.
+- **Bronze**: raw source payloads are preserved for auditability.
+- **Silver**: articles are cleaned, normalized, deduplicated, filtered, and promoted into SQLite and ChromaDB.
+- **Gold**: RAG retrieves relevant evidence and the analyst -> critic -> revision workflow generates final risk assessments.
+- **Consumption**: FastAPI exposes refresh, latest news, ask, timeline, and metrics endpoints; Streamlit provides an operational dashboard.
+- **Governance layers**: evaluation checks, prompt library, assistant registry, usage metrics, and playbooks support responsible AI enablement.
 
 ```mermaid
 flowchart LR
@@ -68,20 +73,22 @@ flowchart LR
         Latest["GET /api/news/latest"]
         Ask["POST /api/news/ask"]
         Timeline["GET /api/news/risk-indices"]
+        Metrics["GET /api/metrics/summary"]
     end
 
     subgraph Intelligence["RAG + Multi-Agent Reasoning"]
         Retrieve["Semantic Retrieval<br/>ranked evidence search"]
-        Analyst["Lead Analyst<br/>GPT-4o risk assessment"]
-        Critic["Verification Critic<br/>Claude evidence check"]
-        Consensus["Consensus Report<br/>risk score, claims, citations"]
+        Analyst["Lead Analyst<br/>initial assessment"]
+        Critic["Verification Critic<br/>structured feedback"]
+        Revision["Analyst Revision<br/>final report"]
     end
 
     subgraph UI["Streamlit Control Center"]
         Dashboard["Dashboard KPIs"]
         Chart["Gold Risk Timeline"]
-        Workspace["AI Consensus Workspace"]
+        Workspace["Final Risk Assessment"]
         SourcesPanel["Evidence Source Review"]
+        Usage["Usage Metrics"]
     end
 
     NewsAPI --> Fetcher
@@ -97,12 +104,13 @@ flowchart LR
     Latest --> SilverDB
     Ask --> Retrieve
     Timeline --> Gold
+    Metrics --> Usage
 
     Chroma --> Retrieve
     Retrieve --> Analyst
     Analyst --> Critic
-    Critic --> Consensus
-    Consensus --> Gold
+    Critic --> Revision
+    Revision --> Gold
 
     Dashboard --> Latest
     Workspace --> Ask
@@ -110,8 +118,6 @@ flowchart LR
     Chart --> Timeline
     Gold --> Chart
     SilverDB --> SourcesPanel
-    Consensus --> Workspace
-    Latest --> Dashboard
 ```
 
 ![RiskLens AI Advanced AI-Medallion Architecture](diagrams/aegis-risk-medallion-architecture.png)
@@ -122,7 +128,83 @@ flowchart LR
 ![RiskLens AI Answers](screenshots/ai_answers.png)
 ![RiskLens AI Sources](screenshots/sources.png)
 
-## Run Locally
+## AI Governance And Production-Readiness Patterns
+
+Implemented production-minded controls include:
+
+- structured logging across ingestion, API, RAG, LLM, and metrics flows
+- error handling for source failures, malformed payloads, database failures, vector store failures, and LLM failures
+- RAG grounding with source references such as `[Source 1]`
+- critic review and one revision pass before the final user-facing assessment
+- uncertainty notes and recommended human review points
+- pytest coverage for API, parser, vector retrieval, LLM workflow, evaluation, prompt loading, assistant loading, and metrics recording
+- prompt lifecycle statuses: `draft`, `testing`, `approved`, `deprecated`
+- assistant lifecycle metadata and prompt ID validation
+- local evaluation checks for groundedness, citation coverage, output structure, risk-score validity, and critic/revision signals
+- privacy-conscious usage metrics that avoid storing personal data, prompts, full responses, or raw article bodies
+
+Known production gaps are documented below and in the playbooks. The project is designed to demonstrate production-aware architecture, not to claim full enterprise deployment.
+
+## Evaluation And Monitoring
+
+The evaluation module in `app/evaluation/` checks final risk assessments without calling external services. It measures:
+
+- groundedness signals
+- citation / evidence coverage
+- structured output validity
+- risk score validity
+- critic / revision quality signals
+- pass / warning / fail status
+
+Usage metrics are stored locally in `data/usage_metrics.jsonl` by default and can be configured with `USAGE_METRICS_PATH`. Metrics track operational metadata such as run status, assistant ID, focus topic, evidence count, final risk score, evaluation status, citation count, latency, and failure counts.
+
+Summary endpoint:
+
+```text
+GET /api/metrics/summary
+```
+
+## Prompt Library And Assistants
+
+Prompts are stored outside business logic in [app/prompts/library.json](app/prompts/library.json). Each prompt includes metadata such as prompt ID, name, version, persona, use case, owner, lifecycle status, required inputs, expected output, and template text.
+
+Persona-based assistants are stored in [app/assistants/registry.json](app/assistants/registry.json). Assistants reference prompt IDs and define persona guidance, output style, expected sections, version, owner, and lifecycle status.
+
+Available assistants:
+
+- `risk_analyst`: detailed evidence-based risk assessment
+- `executive_briefing`: concise senior-management summary
+- `compliance_review`: auditability, unsupported claims, uncertainty, and escalation review
+- `market_intelligence`: trends, commercial implications, and monitoring signals
+
+## AI Enablement Playbooks
+
+Practical operating and governance guidance is available in [docs/playbooks](docs/playbooks/README.md):
+
+- [User Playbook](docs/playbooks/user_playbook.md)
+- [Assistant Playbook](docs/playbooks/assistant_playbook.md)
+- [Prompt Governance Playbook](docs/playbooks/prompt_governance_playbook.md)
+- [Evaluation Playbook](docs/playbooks/evaluation_playbook.md)
+- [Production Readiness Playbook](docs/playbooks/production_readiness_playbook.md)
+
+## Tech Stack
+
+- Python
+- FastAPI
+- Streamlit
+- SQLite
+- SQLAlchemy
+- ChromaDB
+- OpenAI
+- Anthropic
+- Groq
+- pandas
+- Plotly
+- BeautifulSoup
+- feedparser / RSS parsing
+- pytest
+
+## How To Run Locally
 
 ### 1. Create and activate a virtual environment
 
@@ -139,7 +221,7 @@ pip install -r requirements.txt
 
 ### 3. Configure environment variables
 
-Create a `.env` file in the project root with the required keys:
+Create a `.env` file in the project root:
 
 ```env
 NEWSAPI_KEY=your_newsapi_key
@@ -151,7 +233,11 @@ REFRESH_MINUTES=60
 DEFAULT_QUERY=Israel Iran Red Sea Suez oil shipping fuel supply chain
 ```
 
-Environment variables are loaded from `app/core/config.py`.
+Optional metrics path:
+
+```env
+USAGE_METRICS_PATH=data/usage_metrics.jsonl
+```
 
 ### 4. Start the FastAPI backend
 
@@ -159,29 +245,38 @@ Environment variables are loaded from `app/core/config.py`.
 uvicorn app.api.main:app --reload
 ```
 
-The API will be available at:
+API docs:
 
-- `http://127.0.0.1:8000`
 - `http://127.0.0.1:8000/docs`
 
 ### 5. Start the Streamlit dashboard
 
-Open a second terminal, activate the same environment, then run:
-
 ```bash
-streamlit run app/ui/streamlit_app.py
+PYTHONPATH=. streamlit run app/ui/streamlit_app.py
 ```
 
-The dashboard usually opens at:
+### 6. Run tests and compile checks
 
-- `http://localhost:8501`
+```bash
+pytest
+python -m compileall app scaffold.py
+```
 
-## Workflow
+If `python` is not available on your machine, use:
 
-1. Refresh the Bronze pipeline to ingest and promote news data.
-2. Load Silver evidence for a topic such as `oil`, `iran`, or `red sea`.
-3. Sync the Gold timeline to visualize historical risk scores.
-4. Run a consensus query so the analyst and critic debate the currently loaded evidence.
+```bash
+python3 -m compileall app scaffold.py
+```
+
+## Example Workflow
+
+1. Refresh Bronze Pipeline.
+2. Load Silver Evidence for a topic such as `oil`, `iran`, `red sea`, or `suez`.
+3. Sync Gold Timeline.
+4. Run Multi-Model Consensus.
+5. Review the Final Risk Assessment.
+6. Check the Evidence Feed.
+7. Inspect evaluation and usage metrics when available.
 
 Core endpoints:
 
@@ -190,167 +285,100 @@ POST /api/news/refresh
 GET  /api/news/latest
 POST /api/news/ask
 GET  /api/news/risk-indices
+GET  /api/metrics/summary
 ```
 
-## Dashboard Experience
+## Example Final Output Shape
 
-The Streamlit UI is designed as a dashboard-style control center with:
+```markdown
+## Final Risk Assessment
 
-- a command sidebar for ingestion, evidence loading, and timeline sync
-- summary KPI cards for focus topic, timeline risk, consensus grade, and source diversity
-- a historical Gold-layer risk chart
-- a consensus workspace for analyst and critic outputs
-- an evidence feed with source cards and direct links to underlying articles
+Final Risk Score: 3
 
-## Evaluation
+### Concise Summary
+Short evidence-grounded summary with citations.
 
-RiskLens AI includes a lightweight local evaluator in `app/evaluation/` for checking final RAG/LLM risk assessments without calling external services. It measures groundedness signals, citation coverage, required output sections, risk-score validity, critic/revision signals, and evaluation timing metadata.
+### Key Evidence
+- Evidence point tied to retrieved source. [Source 1]
 
-Run the evaluation tests with:
+### Uncertainty Notes
+- Evidence gap or confidence limitation.
+
+### Recommended Human Review Points
+- Issue a human analyst should validate before action.
+```
+
+## Test Coverage
+
+The pytest suite covers:
+
+- FastAPI endpoint happy paths and failure paths
+- article parser and cleaning logic
+- duplicate fingerprinting
+- vector DB retrieval formatting, ranking, and failure handling
+- LLM answer parsing and analyst -> critic -> revision behavior
+- evaluation module pass / warning / fail logic
+- prompt loader validation
+- assistant registry validation
+- metrics recorder privacy, malformed row handling, and summaries
+
+Run:
 
 ```bash
-pytest tests/test_evaluator.py
+pytest
 ```
-
-## Prompt Library
-
-Prompt definitions live in `app/prompts/library.json` so prompt text, metadata, versioning, persona guidance, expected outputs, and lifecycle status can be reviewed separately from application logic. Prompts are loaded through `app/prompts/loader.py`, which validates required metadata and supports lookup by `prompt_id` plus simple filters for persona, use case, and status.
-
-Prompt lifecycle statuses are:
-
-- `draft`: early prompt design, not ready for evaluation.
-- `testing`: being evaluated against representative examples.
-- `approved`: reviewed and suitable for the current workflow.
-- `deprecated`: retained for audit history but no longer recommended.
-
-Prompt changes should be reviewed like code changes: update the version, document the reason for the change, run the prompt loader tests, and use evaluation results from `app/evaluation/` to support promotion from `testing` to `approved`.
-
-## Assistant Registry
-
-Persona-based assistant definitions live in `app/assistants/registry.json`. Each assistant includes lifecycle metadata, intended persona, use case, output style, expected sections, and the prompt IDs it uses from the prompt library.
-
-Available assistants:
-
-- `risk_analyst`: detailed evidence-based risk assessment for analyst users.
-- `executive_briefing`: concise senior-management summary focused on decision points and commercial impact.
-- `compliance_review`: auditability, uncertainty, unsupported claims, and escalation review.
-- `market_intelligence`: trends, commercial implications, and monitoring signals.
-
-Assistant lifecycle statuses mirror prompt governance: `draft`, `testing`, `approved`, and `deprecated`. Assistant changes should be reviewed with their referenced prompts and evaluation results so persona-specific behavior remains traceable and governance-ready.
-
-## AI Enablement Playbooks
-
-Practical operating and governance playbooks are available in [docs/playbooks](docs/playbooks/README.md). They cover user workflows, assistant selection, prompt governance, evaluation, and production readiness.
-
-## Adoption And Usage Metrics
-
-RiskLens AI records lightweight operational metrics for generated risk reports in `data/usage_metrics.jsonl` by default. Set `USAGE_METRICS_PATH` to use another local path. The metrics intentionally avoid personal data, API keys, full prompts, full LLM responses, full conversations, and raw retrieved article bodies. They track high-level adoption and quality signals such as run status, assistant ID, focus topic, evidence count, final risk score, evaluation status, citation count, latency, and failure counts. A summary is available from `GET /api/metrics/summary` and in the Streamlit Overview tab.
-
-Local metrics files are ignored by git. To reset local usage metrics, delete the JSONL file:
-
-```bash
-rm -f data/usage_metrics.jsonl
-```
-
-## Medallion Architecture
-
-### Bronze Layer
-
-- Raw, unmodified article ingestion
-- Auditability and reproducibility of upstream data
-- News sources including NewsAPI, RSS feeds, and targeted scraping
-
-### Silver Layer
-
-- Cleaned and normalized articles stored in SQLite
-- Enriched article metadata such as title, summary, source, timestamp, and content
-
-### Gold Layer
-
-- LLM-generated geopolitical risk assessments
-- Time-series risk scoring
-- Multi-model consensus output
-
-## Vector Relevance Filtering
-
-Before indexing into ChromaDB, the system uses semantic gating to keep only transit-relevant reporting:
-
-```python
-VECTOR_KEYWORDS = [
-    "oil tanker", "shipping lane", "oil transit",
-    "maritime route", "strait", "chokepoint",
-    "blockade", "navy", "pipeline"
-]
-```
-
-This helps reduce:
-
-- noise pollution
-- political-only articles with weak operational relevance
-- irrelevant macroeconomic coverage
-
-## Multi-Agent AI System
-
-### Lead Analyst
-
-- Generates the main geopolitical risk report
-- Surfaces risk factors, mitigation ideas, recommendations, and a risk score
-
-### Verification Critic
-
-- Validates whether claims are supported by retrieved evidence
-- Flags unsupported or weakly grounded reasoning
-
-### Refiner
-
-- Optional cleanup stage for clarity and structure
-
-## Example Output
-
-- Risk score: 3-4 out of 5
-- Typical focus areas:
-  - Strait of Hormuz disruption risk
-  - naval blockades
-  - tanker movement constraints
 
 ## Project Structure
 
 ```text
 app/
-  api/         FastAPI routes and schemas
-  core/        configuration and database setup
-  ingestion/   news fetch, parsing, dedupe, scheduler
-  models/      SQLAlchemy models
-  rag/         vector search and LLM consensus logic
-  services/    article retrieval services
-  ui/          Streamlit dashboard
+  api/          FastAPI routes and schemas
+  assistants/   persona assistant registry
+  core/         configuration, database, logging
+  evaluation/   LLM/RAG quality checks
+  ingestion/    news fetch, parsing, dedupe, scheduler
+  metrics/      usage and adoption metrics
+  models/       SQLAlchemy models
+  prompts/      prompt library and loader
+  rag/          vector search and LLM workflow
+  services/     article retrieval services
+  ui/           Streamlit dashboard
+docs/
+  playbooks/    AI enablement and governance documentation
+tests/          pytest test suite
 ```
 
-## Tech Stack
+## Limitations
 
-- Python
-- FastAPI
-- SQLAlchemy
-- Streamlit
-- ChromaDB
-- OpenAI
-- Anthropic
-- Groq
-- BeautifulSoup
-- RSS parsing
+- Portfolio / prototype system, not a regulated production deployment.
+- Source quality depends on available news feeds and web parsing reliability.
+- LLM outputs require human review before high-impact decisions.
+- Evaluation metrics are lightweight heuristics, not a full benchmark framework.
+- Local JSONL usage metrics are simple and intended for demo / prototype monitoring.
+- No full authentication or authorization layer is currently implemented.
+- No production CI/CD, deployment pipeline, secrets manager, or centralized observability stack is included yet.
+- Risk scoring is qualitative and not calibrated against market or vessel-tracking data.
 
-## Future Work
+## Roadmap
 
-- chokepoint-specific scoring for Hormuz, Suez, and Bab el-Mandeb
-- real-time streaming ingestion
-- graph-based geopolitical entity linking
-- quantitative risk calibration using market data
+Potential next improvements:
+
+- stronger LLM and retrieval evaluation with benchmark datasets
+- richer adoption and quality dashboard
+- authentication and authorization
+- CI/CD with automated test and evaluation gates
+- containerized deployment and environment-specific configuration
+- centralized logging, tracing, and observability
+- more robust source connectors and freshness monitoring
+- model cost and latency tracking
+- formal prompt and assistant approval workflow
+- human review and approval controls for high-risk outputs
 
 ## License
 
-This project is licensed under the MIT License. See the LICENSE file for details.
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
 
 ## Author
 
 Sabbir Ahmed  
-Research-oriented Data Scientist focused on applied AI, ML systems, and decision-support technologies
+Research-oriented Data Scientist focused on applied AI, ML systems, and decision-support technologies.
