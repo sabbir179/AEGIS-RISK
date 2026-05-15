@@ -212,6 +212,19 @@ Run the evaluation tests with:
 pytest tests/test_evaluator.py
 ```
 
+## Prompt Library
+
+Prompt definitions live in `app/prompts/library.json` so prompt text, metadata, versioning, persona guidance, expected outputs, and lifecycle status can be reviewed separately from application logic. Prompts are loaded through `app/prompts/loader.py`, which validates required metadata and supports lookup by `prompt_id` plus simple filters for persona, use case, and status.
+
+Prompt lifecycle statuses are:
+
+- `draft`: early prompt design, not ready for evaluation.
+- `testing`: being evaluated against representative examples.
+- `approved`: reviewed and suitable for the current workflow.
+- `deprecated`: retained for audit history but no longer recommended.
+
+Prompt changes should be reviewed like code changes: update the version, document the reason for the change, run the prompt loader tests, and use evaluation results from `app/evaluation/` to support promotion from `testing` to `approved`.
+
 ## Medallion Architecture
 
 ### Bronze Layer
