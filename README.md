@@ -47,6 +47,8 @@ RiskLens AI is organized as an end-to-end risk intelligence workflow:
 - **Consumption**: FastAPI exposes refresh, latest news, ask, timeline, and metrics endpoints; Streamlit provides an operational dashboard.
 - **Governance layers**: evaluation checks, prompt library, assistant registry, usage metrics, and playbooks support responsible AI enablement.
 
+The diagram below shows the core risk intelligence data pipeline and application flow.
+
 ```mermaid
 flowchart LR
     subgraph Sources["Open-Source Intelligence Sources"]
@@ -121,6 +123,41 @@ flowchart LR
 ```
 
 ![RiskLens AI Advanced AI-Medallion Architecture](diagrams/aegis-risk-medallion-architecture.png)
+
+## Enterprise AI Enablement Architecture
+
+The broader architecture adds governance, evaluation, prompt lifecycle management, persona assistants, adoption metrics, and production-readiness controls around the core RAG pipeline. These layers are implemented as lightweight modules and documentation patterns suitable for a production-minded prototype, not as a fully deployed enterprise control plane.
+
+```mermaid
+flowchart LR
+    A["Sources: NewsAPI / RSS / Web Parsing"] --> B["Bronze Layer: Raw Ingestion"]
+    B --> C["Silver Layer: Cleaning / Filtering / Deduplication / Vector Indexing"]
+    C --> D["Gold Layer: RAG + Analyst -> Critic -> Revision"]
+    D --> E["Final Risk Assessment"]
+    E --> F["FastAPI Endpoints"]
+    E --> G["Streamlit Dashboard"]
+
+    H["Prompt Library"] --> D
+    I["Persona Assistant Registry"] --> D
+    J["Evaluation Module"] --> E
+    K["Usage & Adoption Metrics"] --> F
+    K --> G
+    L["AI Enablement Playbooks"] --> H
+    L --> I
+    M["Production Readiness: Logging / Error Handling / Tests / Privacy"] --> B
+    M --> C
+    M --> D
+    M --> K
+```
+
+Enterprise enablement layers:
+
+- **Prompt Library**: versioned prompt assets with metadata, owners, expected outputs, and lifecycle status.
+- **Persona Assistant Registry**: reusable assistant definitions for risk analyst, executive briefing, compliance review, and market intelligence workflows.
+- **Evaluation Module**: local checks for groundedness, citation coverage, output structure, risk-score validity, and revision quality signals.
+- **Usage & Adoption Metrics**: privacy-conscious JSONL metrics for operational reporting and adoption monitoring.
+- **AI Enablement Playbooks**: user, assistant, prompt governance, evaluation, and production-readiness guidance.
+- **Production Readiness Controls**: logging, error handling, pytest coverage, and privacy-safe metrics handling.
 
 ## Dashboard Preview
 
