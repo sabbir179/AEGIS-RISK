@@ -47,86 +47,21 @@ RiskLens AI is organized as an end-to-end risk intelligence workflow:
 - **Consumption**: FastAPI exposes refresh, latest news, ask, timeline, and metrics endpoints; Streamlit provides an operational dashboard.
 - **Governance layers**: evaluation checks, prompt library, assistant registry, usage metrics, and playbooks support responsible AI enablement.
 
-The diagram below shows the core risk intelligence data pipeline and application flow.
+### Core Risk Intelligence Pipeline
+
+The first diagram shows the core risk intelligence data and RAG pipeline: source data moves through Bronze raw ingestion, Silver cleaning and vector indexing, Gold RAG reasoning, and consumption through FastAPI and Streamlit.
 
 ```mermaid
 flowchart LR
-    subgraph Sources["Open-Source Intelligence Sources"]
-        NewsAPI["NewsAPI"]
-        RSS["RSS Feeds<br/>BBC / Jerusalem Post / Tehran Times"]
-        Web["Targeted Web Parsing<br/>Al Jazeera"]
-    end
-
-    subgraph Ingestion["Ingestion Pipeline"]
-        Fetcher["NewsFetcher<br/>fetch + clean source payloads"]
-        Parser["Parser + Relevance Gate<br/>oil, shipping, chokepoint, conflict signals"]
-        Dedupe["Deduplication<br/>avoid repeated articles"]
-    end
-
-    subgraph Medallion["Medallion Data Layer"]
-        Bronze["Bronze<br/>raw article JSON audit trail"]
-        SilverDB["Silver<br/>normalized articles in SQLite"]
-        Chroma["Vector Memory<br/>ChromaDB evidence index"]
-        Gold["Gold<br/>verified risk index + reports"]
-    end
-
-    subgraph API["FastAPI Backend"]
-        Refresh["POST /api/news/refresh"]
-        Latest["GET /api/news/latest"]
-        Ask["POST /api/news/ask"]
-        Timeline["GET /api/news/risk-indices"]
-        Metrics["GET /api/metrics/summary"]
-    end
-
-    subgraph Intelligence["RAG + Multi-Agent Reasoning"]
-        Retrieve["Semantic Retrieval<br/>ranked evidence search"]
-        Analyst["Lead Analyst<br/>initial assessment"]
-        Critic["Verification Critic<br/>structured feedback"]
-        Revision["Analyst Revision<br/>final report"]
-    end
-
-    subgraph UI["Streamlit Control Center"]
-        Dashboard["Dashboard KPIs"]
-        Chart["Gold Risk Timeline"]
-        Workspace["Final Risk Assessment"]
-        SourcesPanel["Evidence Source Review"]
-        Usage["Usage Metrics"]
-    end
-
-    NewsAPI --> Fetcher
-    RSS --> Fetcher
-    Web --> Fetcher
-    Fetcher --> Bronze
-    Fetcher --> Parser
-    Parser --> Dedupe
-    Dedupe --> SilverDB
-    SilverDB --> Chroma
-
-    Refresh --> Fetcher
-    Latest --> SilverDB
-    Ask --> Retrieve
-    Timeline --> Gold
-    Metrics --> Usage
-
-    Chroma --> Retrieve
-    Retrieve --> Analyst
-    Analyst --> Critic
-    Critic --> Revision
-    Revision --> Gold
-
-    Dashboard --> Latest
-    Workspace --> Ask
-    SourcesPanel --> Latest
-    Chart --> Timeline
-    Gold --> Chart
-    SilverDB --> SourcesPanel
+    A["Sources<br/>NewsAPI / RSS / Web Parsing"] --> B["Bronze Layer<br/>Raw Ingestion"]
+    B --> C["Silver Layer<br/>Cleaning / Filtering / Deduplication / Vector Indexing"]
+    C --> D["Gold Layer<br/>RAG + Analyst -> Critic -> Revision"]
+    D --> E["Consume<br/>FastAPI Endpoints / Streamlit Dashboard"]
 ```
-
-![RiskLens AI Advanced AI-Medallion Architecture](diagrams/aegis-risk-medallion-architecture.png)
 
 ## Enterprise AI Enablement Architecture
 
-The broader architecture adds governance, evaluation, prompt lifecycle management, persona assistants, adoption metrics, and production-readiness controls around the core RAG pipeline. These layers are implemented as lightweight modules and documentation patterns suitable for a production-minded prototype, not as a fully deployed enterprise control plane.
+The second diagram shows the enterprise AI enablement layers around the core RAG pipeline: governance, evaluation, prompt lifecycle management, persona assistants, adoption metrics, and production-readiness controls. These layers are implemented as lightweight modules and documentation patterns suitable for a production-minded prototype, not as a fully deployed enterprise control plane.
 
 ```mermaid
 flowchart LR
