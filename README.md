@@ -49,9 +49,7 @@ RiskLens AI is organized as an end-to-end risk intelligence workflow:
 
 ### Core Risk Intelligence Pipeline
 
-The first diagram shows the core risk intelligence data and RAG pipeline: source data moves through Bronze raw ingestion, Silver cleaning and vector indexing, Gold RAG reasoning, and consumption through FastAPI and Streamlit.
-
-![Updated AEGIS-RISK medallion architecture](diagrams/update_aegis-risk-medallion-architecture.png)
+The core risk intelligence data and RAG pipeline moves source data through Bronze raw ingestion, Silver cleaning and vector indexing, Gold RAG reasoning, and consumption through FastAPI and Streamlit.
 
 ### Object-Level Pipeline Architecture
 
