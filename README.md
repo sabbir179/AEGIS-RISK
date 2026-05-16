@@ -51,53 +51,13 @@ RiskLens AI is organized as an end-to-end risk intelligence workflow:
 
 The first diagram shows the core risk intelligence data and RAG pipeline: source data moves through Bronze raw ingestion, Silver cleaning and vector indexing, Gold RAG reasoning, and consumption through FastAPI and Streamlit.
 
-```mermaid
-flowchart LR
-    subgraph Sources["Sources"]
-        NewsAPI["NewsAPI"]
-        RSS["RSS Feeds"]
-        Web["Targeted Web Parsing"]
-        SourceObjects["Object type: JSON / RSS / HTML<br/>Interface: APIs and feeds"]
-    end
+![Updated AEGIS-RISK medallion architecture](diagrams/update_aegis-risk-medallion-architecture.png)
 
-    subgraph Pipeline["Risk Intelligence Pipeline<br/>Python / FastAPI / SQLite / ChromaDB / LLMs"]
-        subgraph Bronze["Bronze Layer"]
-            BronzeJob["Ingestion Job"]
-            BronzeData["Raw Article Data"]
-            BronzeObjects["Object type: JSON files<br/>Load: batch refresh, NewsAPI/RSS pull, raw audit trail<br/>Transformations: no transformation<br/>Data model: raw payload"]
-        end
+### Object-Level Pipeline Architecture
 
-        subgraph Silver["Silver Layer"]
-            SilverService["Parser + ArticleService"]
-            SilverData["Cleaned, Standardized Evidence Data"]
-            SilverObjects["Object type: SQLite tables + ChromaDB index<br/>Load: insert articles, skip duplicates, promote to vector store<br/>Transformations: text cleaning, relevance filtering, risk keyword scoring, vector indexing<br/>Data model: article entity"]
-        end
+This diagram shows the object-level flow across the risk intelligence pipeline, including sources, Bronze raw ingestion, Silver evidence processing, Gold RAG reasoning, governance/enablement controls, and consumption through FastAPI and Streamlit.
 
-        subgraph Gold["Gold Layer"]
-            GoldWorkflow["RAG + Analyst -> Critic -> Revision"]
-            GoldData["Final Risk Assessment + Risk Index"]
-            GoldObjects["Object type: reports + risk time series<br/>Load: user risk query, retrieved evidence, revised consensus output<br/>Transformations: RAG context search, analyst assessment, critic review, analyst revision, score extraction<br/>Data model: final report + risk time series"]
-        end
-    end
-
-    subgraph Consume["Consume"]
-        Streamlit["Streamlit Dashboard"]
-        FastAPI["FastAPI Endpoints"]
-        Analyst["Risk Analyst Decisions"]
-    end
-
-    NewsAPI --> BronzeJob
-    RSS --> BronzeJob
-    Web --> BronzeJob
-    BronzeJob --> BronzeData --> BronzeObjects
-    BronzeObjects --> SilverService
-    SilverService --> SilverData --> SilverObjects
-    SilverObjects --> GoldWorkflow
-    GoldWorkflow --> GoldData --> GoldObjects
-    GoldObjects --> Streamlit
-    GoldObjects --> FastAPI
-    GoldObjects --> Analyst
-```
+![Object-Level Pipeline Architecture](diagrams/objectdiagram.png)
 
 ## Enterprise AI Enablement Architecture
 
