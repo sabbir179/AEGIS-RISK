@@ -94,9 +94,17 @@ Enterprise enablement layers:
 
 ## Dashboard Preview
 
-![RiskLens AI Dashboard](screenshots/dashboard.png)
-![RiskLens AI Answers](screenshots/ai_answers.png)
-![RiskLens AI Sources](screenshots/sources.png)
+The dashboard overview shows the main operational view for monitoring risk intelligence signals.
+
+![Dashboard Overview](screenshots/dashboard-overview.png)
+
+The final risk assessment view shows the generated analyst briefing with supporting rationale.
+
+![Final Risk Assessment](screenshots/final-risk-assessment.png)
+
+The evidence feed shows the source material used to ground the risk assessment workflow.
+
+![Evidence Feed](screenshots/evidence-feed.png)
 
 ## AI Governance And Production-Readiness Patterns
 
