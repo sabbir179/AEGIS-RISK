@@ -53,10 +53,50 @@ The first diagram shows the core risk intelligence data and RAG pipeline: source
 
 ```mermaid
 flowchart LR
-    A["Sources<br/>NewsAPI / RSS / Web Parsing"] --> B["Bronze Layer<br/>Raw Ingestion"]
-    B --> C["Silver Layer<br/>Cleaning / Filtering / Deduplication / Vector Indexing"]
-    C --> D["Gold Layer<br/>RAG + Analyst -> Critic -> Revision"]
-    D --> E["Consume<br/>FastAPI Endpoints / Streamlit Dashboard"]
+    subgraph Sources["Sources"]
+        NewsAPI["NewsAPI"]
+        RSS["RSS Feeds"]
+        Web["Targeted Web Parsing"]
+        SourceObjects["Object type: JSON / RSS / HTML<br/>Interface: APIs and feeds"]
+    end
+
+    subgraph Pipeline["Risk Intelligence Pipeline<br/>Python / FastAPI / SQLite / ChromaDB / LLMs"]
+        subgraph Bronze["Bronze Layer"]
+            BronzeJob["Ingestion Job"]
+            BronzeData["Raw Article Data"]
+            BronzeObjects["Object type: JSON files<br/>Load: batch refresh, NewsAPI/RSS pull, raw audit trail<br/>Transformations: no transformation<br/>Data model: raw payload"]
+        end
+
+        subgraph Silver["Silver Layer"]
+            SilverService["Parser + ArticleService"]
+            SilverData["Cleaned, Standardized Evidence Data"]
+            SilverObjects["Object type: SQLite tables + ChromaDB index<br/>Load: insert articles, skip duplicates, promote to vector store<br/>Transformations: text cleaning, relevance filtering, risk keyword scoring, vector indexing<br/>Data model: article entity"]
+        end
+
+        subgraph Gold["Gold Layer"]
+            GoldWorkflow["RAG + Analyst -> Critic -> Revision"]
+            GoldData["Final Risk Assessment + Risk Index"]
+            GoldObjects["Object type: reports + risk time series<br/>Load: user risk query, retrieved evidence, revised consensus output<br/>Transformations: RAG context search, analyst assessment, critic review, analyst revision, score extraction<br/>Data model: final report + risk time series"]
+        end
+    end
+
+    subgraph Consume["Consume"]
+        Streamlit["Streamlit Dashboard"]
+        FastAPI["FastAPI Endpoints"]
+        Analyst["Risk Analyst Decisions"]
+    end
+
+    NewsAPI --> BronzeJob
+    RSS --> BronzeJob
+    Web --> BronzeJob
+    BronzeJob --> BronzeData --> BronzeObjects
+    BronzeObjects --> SilverService
+    SilverService --> SilverData --> SilverObjects
+    SilverObjects --> GoldWorkflow
+    GoldWorkflow --> GoldData --> GoldObjects
+    GoldObjects --> Streamlit
+    GoldObjects --> FastAPI
+    GoldObjects --> Analyst
 ```
 
 ## Enterprise AI Enablement Architecture
